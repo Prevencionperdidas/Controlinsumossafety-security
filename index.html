@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#0058A3">
+<title>Control de Insumos PPS</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+:root{--b:#0058A3;--bd:#004182;--y:#FFDB00;--bg:#eef1f5;--ok:#0a8a4a;--warn:#c98a00;--err:#cc0008;--tx:#1b1f24;--mu:#6b7480;--ln:#dde2e8}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:15px}
+header{background:var(--b);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;gap:8px;position:sticky;top:0;z-index:20}
+.hl{display:flex;align-items:center;gap:10px;min-width:0}
+#logo{height:38px;width:auto;display:none}
+header h1{font-size:17px;margin:0;line-height:1.1}
+header small{color:#cfe0f2;font-size:11px}
+.pill{border:0;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:600;background:#fff;color:var(--b);cursor:pointer;white-space:nowrap}
+.pill.pend{background:var(--y);color:#222}.pill.off{background:#ffd6d6;color:var(--err)}
+nav{display:flex;gap:4px;overflow-x:auto;background:var(--bd);padding:6px 8px;position:sticky;top:54px;z-index:19;scrollbar-width:none}
+nav button{flex:0 0 auto;border:0;background:transparent;color:#d6e4f3;padding:8px 12px;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer}
+nav button.on{background:var(--y);color:#111}
+main{max-width:1150px;margin:0 auto;padding:12px}
+.tab{display:none}.tab.on{display:block}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--b)}
+label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin-bottom:8px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--ln);border-radius:8px;font-size:15px;font-family:inherit;margin-top:3px;background:#fff;color:var(--tx)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--b);border-color:transparent}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 12px}
+@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+.btn{border:0;background:var(--b);color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer}
+.btn:active{transform:scale(.98)}
+.btn.y{background:var(--y);color:#111}.btn.ghost{background:#e8eef5;color:var(--b)}.btn.red{background:var(--err)}
+.btn.sm{padding:7px 11px;font-size:13px}
+.btn.big{width:100%;padding:16px;font-size:17px;background:var(--y);color:#111;margin-bottom:20px}
+.scanrow{display:flex;gap:8px}.scanrow input{margin:0;font-size:16px}
+.btn.icon{font-size:20px;padding:0 14px}
+.cart{margin-top:10px}
+.ci{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--ln);flex-wrap:wrap}
+.ci.warn{background:#fff6d6;border-radius:8px;padding:9px 6px}
+.cn{flex:1 1 180px;min-width:0}.cn b{display:block;font-size:14px}.cn small{color:var(--mu);font-size:12px}
+.qty{display:flex;align-items:center}
+.qty button{width:38px;height:38px;border:1px solid var(--ln);background:#f5f7fa;font-size:20px;cursor:pointer}
+.qty button:first-child{border-radius:8px 0 0 8px}.qty button:last-child{border-radius:0 8px 8px 0}
+.qty input{width:70px;height:38px;margin:0;border-radius:0;text-align:center;border-left:0;border-right:0;padding:4px}
+.cost{display:flex;align-items:center;gap:4px;margin:0}.cost input{width:100px;margin:0;padding:8px}
+.x{border:0;background:none;color:var(--err);font-size:18px;cursor:pointer;padding:6px}
+.muted{color:var(--mu);font-size:13px}
+canvas.sig{width:100%;height:170px;border:2px dashed #b9c3cf;border-radius:10px;background:#fff;display:block;margin-bottom:8px;touch-action:none}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.toolbar>*{flex:1 1 140px;margin:0}.toolbar .btn{flex:0 0 auto}
+.tw{overflow:auto;max-height:65vh;border:1px solid var(--ln);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f3f6f9;position:sticky;top:0;text-align:left;padding:8px;border-bottom:1px solid var(--ln);white-space:nowrap;z-index:1}
+td{padding:7px 8px;border-bottom:1px solid #eef1f4;vertical-align:top}
+tr.click{cursor:pointer}tr.click:hover td{background:#f5f9ff}
+tr.anul td{color:#aaa;text-decoration:line-through}
+.n{text-align:right;white-space:nowrap}
+.bd{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap}
+.b-ok{background:#d9f2e3;color:var(--ok)}.b-low{background:#fff1c2;color:#8a5d00}.b-no{background:#f8d0d0;color:var(--err)}
+.b-ENTREGA{background:#e3edf8;color:var(--b)}.b-INGRESO{background:#d9f2e3;color:var(--ok)}.b-DEVOLUCION{background:#efe3f8;color:#6b2c91}.b-AJUSTE{background:#fff1c2;color:#8a5d00}.b-pend{background:#ffe9a8;color:#7a5600}.b-ANULADO{background:#eee;color:#777}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:#fff;border-radius:10px;padding:12px;border-left:5px solid var(--b);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.kpi b{display:block;font-size:22px}.kpi span{font-size:12px;color:var(--mu)}
+.kpi.y{border-color:var(--y)}.kpi.r{border-color:var(--err)}.kpi.g{border-color:var(--ok)}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:800px){.charts{grid-template-columns:1fr}}
+.chartbox{position:relative;height:300px}
+#modal,#cam{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:12px}
+#modal.on,#cam.on{display:flex}
+.mbox{background:#fff;border-radius:14px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:16px}
+.mbox h3{margin:0 0 10px;color:var(--b)}
+.camb{background:#000;border-radius:14px;max-width:480px;width:100%;padding:10px;text-align:center}
+.camb video,#qrReader{width:100%;border-radius:10px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#222;color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;z-index:60;display:none;max-width:90vw;text-align:center}
+#toast.ok{background:var(--ok)}#toast.err{background:var(--err)}
+.sub{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.sub button{border:1px solid var(--ln);background:#fff;padding:8px 12px;border-radius:8px;font-weight:600;cursor:pointer;color:var(--b)}
+.sub button.on{background:var(--b);color:#fff}
+.asec{display:none}.asec.on{display:block}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{background:#f3f8fe;border-left:4px solid var(--b);padding:10px;border-radius:6px;font-size:13px;margin-bottom:10px}
+a{color:var(--b)}
+input[type=text]:not([data-noup]),input:not([type]):not([data-noup]),textarea{text-transform:uppercase}
+/* selector visual por categorías */
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin:12px 0}
+.cat{position:relative;border:2px solid var(--ln);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;transition:.15s;user-select:none}
+.cat:active{transform:scale(.97)}
+.cat.on{border-color:var(--b);box-shadow:0 0 0 3px rgba(0,88,163,.18)}
+.im{aspect-ratio:4/3;background:#eef3f9;display:flex;align-items:center;justify-content:center;font-size:46px;overflow:hidden}
+.im img{width:100%;height:100%;object-fit:cover;display:block}
+.cl{padding:8px 10px}.cl b{display:block;font-size:14px;line-height:1.2}.cl small{color:var(--mu);font-size:12px}
+.cat.on .cl{background:var(--b);color:#fff}.cat.on .cl small{color:#cfe0f2}
+.cb{position:absolute;top:6px;right:6px;background:var(--y);color:#111;font-weight:800;font-size:13px;min-width:26px;height:26px;border-radius:13px;display:flex;align-items:center;justify-content:center;padding:0 6px;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.panel{background:#f4f8fc;border:1px solid #d4e2f1;border-radius:12px;padding:10px;margin-bottom:12px}
+.panel h3{margin:2px 0 10px;font-size:15px;color:var(--b);display:flex;justify-content:space-between;align-items:center}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:10px}
+.it{background:#fff;border:2px solid var(--ln);border-radius:12px;overflow:hidden;position:relative}
+.it.sel{border-color:var(--y)}
+.it .im{aspect-ratio:1;cursor:pointer;font-size:40px}
+.it .cl{padding:6px 8px}.it .cl b{font-size:13px}
+.it .st0{color:var(--err);font-weight:700}
+.it .qty{padding:0 6px 8px;justify-content:center}.it .qty button{width:34px;height:34px}.it .qty input{width:52px;height:34px}
+.tap{position:absolute;left:0;right:0;top:0;text-align:center;font-size:11px;background:rgba(0,0,0,.45);color:#fff;padding:2px;pointer-events:none}
+h3.selh{font-size:14px;margin:6px 0 0;color:var(--b)}
+.fotoed{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.fotoed .im{width:110px;height:110px;border-radius:10px;flex:0 0 auto;aspect-ratio:auto;font-size:34px;border:1px solid var(--ln)}
+.thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;display:block;background:#eef3f9}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl"><img id="logo" alt="PPS"><div><h1>Control de Insumos</h1><small>Prevención de Pérdidas y Seguridad · IKEA CD</small></div></div>
+  <button id="pill" class="pill" onclick="manualSync()">…</button>
+</header>
+<nav id="tabs">
+  <button data-tab="ent">📤 Entregar</button>
+  <button data-tab="ing">📥 Ingresar</button>
+  <button data-tab="stk">📦 Stock</button>
+  <button data-tab="mov">📋 Movimientos</button>
+  <button data-tab="res">📊 Resumen</button>
+  <button data-tab="adm">⚙ Admin</button>
+</nav>
+
+<main>
+<!-- ================= ENTREGAR ================= -->
+<section id="t-ent" class="tab">
+  <div class="card">
+    <h2>1 · Insumos a entregar</h2>
+    <div class="scanrow">
+      <input id="scanE" data-noup list="dlIns" placeholder="Escanea el QR / código o escribe el nombre" autocomplete="off">
+      <button class="btn icon" onclick="openCam('E')" title="Escanear con cámara">📷</button>
+    </div>
+    <div id="pickE"></div>
+    <h3 class="selh">Seleccionados para entregar</h3>
+    <div id="cartE" class="cart"></div>
+  </div>
+  <div class="card">
+    <h2>2 · Datos de la entrega</h2>
+    <div class="grid2">
+      <label>Área que recibe *<select id="eArea"></select></label>
+      <label>Nombre de quien recibe *<input id="eRec" list="dlRec" autocomplete="off"></label>
+      <label>Turno (automático según la hora)<input id="eTurno" disabled></label>
+    </div>
+    <label>Observación<textarea id="eObs" rows="2" placeholder="Opcional"></textarea></label>
+  </div>
+  <div class="card">
+    <h2>3 · Firma de quien recibe <span id="firmaReq" class="muted"></span></h2>
+    <canvas id="sigE" class="sig"></canvas>
+    <button class="btn ghost sm" onclick="SIG.clear()">Limpiar firma</button>
+  </div>
+  <button class="btn big" onclick="regEntrega()">✔ Registrar entrega</button>
+</section>
+
+<!-- ================= INGRESAR ================= -->
+<section id="t-ing" class="tab">
+  <div class="card">
+    <h2>1 · Tipo de ingreso</h2>
+    <select id="iTipo" onchange="onTipoIng()">
+      <option value="INGRESO">Compra / reposición (llega a bodega)</option>
+      <option value="DEVOLUCION">Devolución desde un área</option>
+    </select>
+  </div>
+  <div class="card">
+    <h2>2 · Insumos que ingresan</h2>
+    <div class="scanrow">
+      <input id="scanI" data-noup list="dlIns" placeholder="Escanea el QR / código o escribe el nombre" autocomplete="off">
+      <button class="btn icon" onclick="openCam('I')">📷</button>
+    </div>
+    <div id="pickI"></div>
+    <h3 class="selh">Seleccionados para ingresar</h3>
+    <div id="cartI" class="cart"></div>
+  </div>
+  <div class="card">
+    <h2>3 · Respaldo</h2>
+    <div class="grid2" id="iCompra">
+      <label>Proveedor<input id="iProv" list="dlProv" autocomplete="off"></label>
+      <label>Tipo documento<select id="iDocT"><option>Guía de despacho</option><option>Factura</option><option>Orden de compra</option><option>Otro</option></select></label>
+      <label>N° documento<input id="iDocN" autocomplete="off"></label>
+    </div>
+    <div class="grid2" id="iDev" style="display:none">
+      <label>Área que devuelve *<select id="iArea"></select></label>
+      <label>Quién devuelve<input id="iRec" list="dlRec" autocomplete="off"></label>
+    </div>
+    <div class="grid2">
+      <label>Recibido por *<input id="iResp" list="dlResp" autocomplete="off"></label>
+      <label>Observación<input id="iObs" autocomplete="off"></label>
+    </div>
+  </div>
+  <button class="btn big" onclick="regIngreso()">✔ Registrar ingreso a bodega</button>
+</section>
+
+<!-- ================= STOCK ================= -->
+<section id="t-stk" class="tab">
+  <div class="kpis" id="sK"></div>
+  <div class="card">
+    <div class="toolbar">
+      <input id="sQ" placeholder="🔎 Buscar insumo, código, categoría, ubicación" oninput="renderStock()">
+      <select id="sF" onchange="renderStock()"><option value="">Todos los estados</option><option value="OK">OK</option><option value="BAJO">Bajo mínimo</option><option value="SIN">Sin stock</option></select>
+      <select id="sC" onchange="renderStock()"></select>
+      <button class="btn sm" onclick="exportStock()">⬇ Excel</button>
+    </div>
+    <p class="muted" style="margin:0 0 8px">Toca un insumo para ver su kardex (historial con saldo).</p>
+    <div class="tw"><table id="sT"></table></div>
+  </div>
+</section>
+
+<!-- ================= MOVIMIENTOS ================= -->
+<section id="t-mov" class="tab">
+  <div class="card">
+    <div class="toolbar">
+      <label>Desde<input type="date" id="mD1" onchange="renderMovs()"></label>
+      <label>Hasta<input type="date" id="mD2" onchange="renderMovs()"></label>
+      <label>Tipo<select id="mTipo" onchange="renderMovs()"><option value="">Todos</option><option>ENTREGA</option><option>INGRESO</option><option>DEVOLUCION</option><option>AJUSTE</option></select></label>
+      <label>Área<select id="mArea" onchange="renderMovs()"></select></label>
+      <label>Buscar<input id="mQ" oninput="renderMovs()" placeholder="insumo, persona, vale, doc"></label>
+      <button class="btn sm" onclick="exportMovs()">⬇ Excel</button>
+    </div>
+    <div id="mInfo" class="muted" style="margin-bottom:6px"></div>
+    <div class="tw"><table id="mT"></table></div>
+  </div>
+</section>
+
+<!-- ================= RESUMEN ================= -->
+<section id="t-res" class="tab">
+  <div class="card">
+    <div class="toolbar">
+      <label>Desde<input type="date" id="rD1" onchange="renderResumen()"></label>
+      <label>Hasta<input type="date" id="rD2" onchange="renderResumen()"></label>
+      <button class="btn sm ghost" onclick="rango('mes')">Este mes</button>
+      <button class="btn sm ghost" onclick="rango('ant')">Mes anterior</button>
+      <button class="btn sm ghost" onclick="rango('anio')">Este año</button>
+    </div>
+  </div>
+  <div class="kpis" id="rK"></div>
+  <div class="charts">
+    <div class="card"><h2>Consumo por área (unidades)</h2><div class="chartbox"><canvas id="cArea"></canvas></div></div>
+    <div class="card"><h2>Top 10 insumos entregados</h2><div class="chartbox"><canvas id="cTop"></canvas></div></div>
+  </div>
+  <div class="card"><h2>Ingresos vs entregas · últimos 12 meses</h2><div class="chartbox"><canvas id="cMes"></canvas></div></div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><h2>Detalle de entregas por área e insumo</h2><button class="btn sm" onclick="exportResumen()">⬇ Excel</button></div>
+    <div class="tw"><table id="rT"></table></div>
+  </div>
+</section>
+
+<!-- ================= ADMIN ================= -->
+<section id="t-adm" class="tab">
+  <div class="card" id="admLock">
+    <h2>Acceso administrador</h2>
+    <div class="row"><input id="pin" type="password" inputmode="numeric" placeholder="PIN" style="max-width:200px;margin:0"><button class="btn" onclick="unlock()">Entrar</button></div>
+  </div>
+  <div id="admBody" style="display:none">
+    <div class="sub" id="admSub">
+      <button data-s="ins" class="on">Insumos</button>
+      <button data-s="cat">Categorías</button>
+      <button data-s="are">Áreas</button>
+      <button data-s="con">Conteo físico</button>
+      <button data-s="qr">Etiquetas QR</button>
+      <button data-s="imp">Importar Excel</button>
+      <button data-s="cfg">Configuración</button>
+    </div>
+
+    <div class="asec on" id="a-ins">
+      <div class="card">
+        <h2 id="aInsTit">Nuevo insumo</h2>
+        <div class="fotoed">
+          <div class="im" id="aFotoPrev">📷</div>
+          <div>
+            <label style="margin:0">Foto del insumo<input type="file" id="aFoto" accept="image/*" onchange="pickFoto(this)"></label>
+            <button class="btn sm ghost" onclick="EDIT_FOTO='';showFotoPrev('')">Quitar foto</button>
+          </div>
+        </div>
+        <div class="grid3">
+          <label>Código *<input id="aCod" autocomplete="off" style="text-transform:uppercase"></label>
+          <label>Nombre *<input id="aNom" autocomplete="off"></label>
+          <label>Categoría<input id="aCat" list="dlCat" autocomplete="off"></label>
+          <label>Unidad<input id="aUni" list="dlUni" value="UN" autocomplete="off"></label>
+          <label>Stock mínimo<input id="aMin" type="number" inputmode="decimal" value="0"></label>
+          <label>Ubicación en bodega<input id="aUbi" autocomplete="off"></label>
+          <label>Costo unitario ($)<input id="aCos" type="number" inputmode="decimal" value="0"></label>
+          <label>Activo<select id="aAct"><option>SI</option><option>NO</option></select></label>
+          <label id="aIniL">Stock inicial (solo al crear)<input id="aIni" type="number" inputmode="decimal" value="0"></label>
+        </div>
+        <div class="row"><button class="btn" onclick="saveInsumo()">Guardar insumo</button><button class="btn ghost" onclick="newInsumo()">Limpiar / nuevo</button></div>
+      </div>
+      <div class="card">
+        <div class="toolbar"><input id="aQ" placeholder="🔎 Filtrar" oninput="renderAdmIns()"><button class="btn sm y" onclick="printLabels('sel')">🏷 Imprimir QR seleccionados</button></div>
+        <div class="tw"><table id="aT"></table></div>
+      </div>
+    </div>
+
+    <div class="asec" id="a-cat">
+      <div class="card">
+        <h2>Fotos de categorías</h2>
+        <div class="hint">Las categorías salen del campo <b>Categoría</b> de cada insumo (ej: Calzado de seguridad, Cortantes microdentados, Guantes de seguridad, Otros). Aquí le pones la foto que se ve en el cuadro de la entrega. Si no tiene foto, se usa la del primer insumo de la categoría.</div>
+        <input type="file" id="catFile" accept="image/*" style="display:none" onchange="pickCatFoto(this)">
+        <div class="tw"><table id="catT"></table></div>
+      </div>
+    </div>
+
+    <div class="asec" id="a-are">
+      <div class="card">
+        <h2>Área de la operación</h2>
+        <div class="grid3">
+          <label>Nombre del área *<input id="arN" autocomplete="off"></label>
+          <label>Responsable / jefatura<input id="arR" autocomplete="off"></label>
+          <label>Activa<select id="arA"><option>SI</option><option>NO</option></select></label>
+        </div>
+        <div class="row"><button class="btn" onclick="saveArea()">Guardar área</button><button class="btn sm y" onclick="printLabels('areas')">🏷 Imprimir QR de áreas</button></div>
+      </div>
+      <div class="card"><div class="tw"><table id="arT"></table></div></div>
+    </div>
+
+    <div class="asec" id="a-con">
+      <div class="card">
+        <h2>Conteo físico / ajuste de inventario</h2>
+        <div class="hint">Cuenta físicamente el insumo en bodega e ingresa lo contado. La app registra un movimiento de <b>AJUSTE</b> por la diferencia (queda auditado con motivo y responsable).</div>
+        <div class="grid2">
+          <label>Insumo<select id="cCod" onchange="onConteo()"></select></label>
+          <label>Stock en sistema<input id="cSys" disabled></label>
+          <label>Cantidad contada *<input id="cCnt" type="number" inputmode="decimal" oninput="onConteo()"></label>
+          <label>Diferencia<input id="cDif" disabled></label>
+          <label>Responsable del conteo *<input id="cResp" list="dlResp"></label>
+          <label>Motivo *<input id="cMot" placeholder="Ej: Inventario mensual, merma, error de registro"></label>
+        </div>
+        <button class="btn" onclick="saveConteo()">Registrar ajuste</button>
+      </div>
+    </div>
+
+    <div class="asec" id="a-qr">
+      <div class="card">
+        <h2>Enlace de entrega (para personas de otras áreas)</h2>
+        <div class="hint">Este enlace <b>solo permite registrar entregas</b>: muestra las categorías e insumos con foto, el área, quién recibe y la firma. No muestra stock, movimientos, costos ni el resumen.</div>
+        <div class="row"><input id="lnkEnt" readonly data-noup style="flex:1 1 260px;margin:0"><button class="btn sm ghost" onclick="navigator.clipboard?.writeText(linkEntrega()).then(()=>toast('Enlace copiado','ok'))">Copiar</button><button class="btn y" onclick="qrEntrega()">🖨 Afiche QR del enlace de entrega</button></div>
+      </div>
+      <div class="card">
+        <h2>Etiquetas QR</h2>
+        <div class="hint">
+          <b>Cómo funciona:</b> cada etiqueta tiene un QR con el link de esta app + el código del insumo.<br>
+          • Con <b>cualquier celular</b>: se escanea con la cámara normal → abre el enlace de entrega con el insumo ya cargado.<br>
+          • Con <b>Zebra</b>: con el cursor en el campo de escaneo, gatilla el lector y se agrega solo.<br>
+          • Escanear de nuevo el mismo QR suma 1 unidad. El QR de un <b>área</b> selecciona el área que recibe.
+        </div>
+        <div class="row">
+          <button class="btn y" onclick="printLabels('all')">🏷 Todos los insumos activos</button>
+          <button class="btn y" onclick="printLabels('sel')">🏷 Solo seleccionados (pestaña Insumos)</button>
+          <button class="btn y" onclick="printLabels('areas')">🏷 QR de áreas</button>
+        </div>
+        <label style="margin-top:12px">Tamaño de etiqueta<select id="qSize"><option value="s">Pequeña (4 × 3 cm)</option><option value="m" selected>Mediana (6 × 4 cm)</option><option value="l">Grande (9 × 6 cm, para estantería)</option></select></label>
+      </div>
+    </div>
+
+    <div class="asec" id="a-imp">
+      <div class="card">
+        <h2>Carga masiva de insumos desde Excel</h2>
+        <div class="hint">Columnas: <b>Codigo, Nombre, Categoria, Unidad, StockMinimo, Ubicacion, CostoUnit, StockInicial</b>. Si el código ya existe se actualiza (el StockInicial solo se aplica a insumos nuevos).</div>
+        <div class="row"><button class="btn ghost" onclick="plantilla()">⬇ Descargar plantilla</button><input type="file" id="impF" accept=".xlsx,.xls,.csv" style="max-width:320px" onchange="importXls(this)"></div>
+      </div>
+    </div>
+
+    <div class="asec" id="a-cfg">
+      <div class="card">
+        <h2>Conexión</h2>
+        <label>URL Apps Script (/exec)<input id="cfgApi" data-noup></label>
+        <div class="row"><button class="btn" onclick="saveApi()">Guardar URL</button><button class="btn ghost" onclick="refresh(true)">Recargar datos del servidor</button></div>
+      </div>
+      <div class="card">
+        <h2>Cola sin sincronizar</h2>
+        <div id="qInfo" class="muted"></div>
+        <div class="row" style="margin-top:8px"><button class="btn" onclick="manualSync()">Sincronizar ahora</button><button class="btn red sm" onclick="dropQueue()">Descartar cola</button><button class="btn ghost sm" onclick="lockAdm()">Cerrar sesión admin</button><button class="btn ghost sm" onclick="salirApp()">Cerrar sesión del equipo</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<datalist id="dlIns"></datalist><datalist id="dlRec"></datalist><datalist id="dlResp"></datalist>
+<datalist id="dlProv"></datalist><datalist id="dlCat"></datalist>
+<datalist id="dlUni"><option>UN</option><option>PAR</option><option>CAJA</option><option>PAQUETE</option><option>ROLLO</option><option>LITRO</option><option>KG</option><option>METRO</option><option>RESMA</option></datalist>
+
+<div id="modal" onclick="if(event.target===this)closeModal()"><div class="mbox" id="mBody"></div></div>
+<div id="cam" onclick="if(event.target===this)closeCam()"><div class="camb"><video id="camV" playsinline muted></video><div id="qrReader"></div><button class="btn y" style="margin-top:10px" onclick="closeCam()">Cerrar cámara</button></div></div>
+<div id="toast"></div>
+<div id="gate" style="display:none;position:fixed;inset:0;background:var(--b);z-index:80;align-items:center;justify-content:center;padding:20px">
+  <div class="mbox" style="max-width:380px;text-align:center">
+    <img id="gateLogo" alt="" style="height:60px;display:none;margin:0 auto 8px">
+    <h3>Control de Insumos PPS</h3>
+    <p class="muted">Acceso restringido al equipo de Prevención de Pérdidas.<br>Para registrar entregas usa el enlace de entrega.</p>
+    <input id="gateKey" type="password" placeholder="Clave de acceso" style="text-align:center" onkeydown="if(event.key==='Enter')gateIn()">
+    <button class="btn y" style="width:100%;margin-top:10px" onclick="gateIn()">Entrar</button>
+    <p id="gateMsg" style="font-size:13px;margin:10px 0 0;min-height:1em"></p>
+    <p class="muted" style="margin-top:12px"><a href="entrega.html">Ir a registrar una entrega →</a></p>
+  </div>
+</div>
+
+<script>
+/* =================== CONFIGURACIÓN =================== */
+const API_DEFAULT = 'PEGA_AQUI_LA_URL_DE_APPS_SCRIPT';   // https://script.google.com/a/macros/ikea.cl/s/XXXX/exec
+const LOGO_SRC = '';            // pega aquí el logo PPS completo: 'data:image/png;base64,....'
+const ADMIN_PIN = '358097';
+const FIRMA_OBLIGATORIA = true; // firma de quien recibe obligatoria en entregas
+
+/* =================== UTILIDADES =================== */
+let API = localStorage.getItem('ins_api') || API_DEFAULT;
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch (e) { toast('Memoria local llena', 'err') } };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, '0');
+const fmtDT = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+const ymd = d => fmtDT(d).slice(0, 10);
+const showDT = s => { s = String(s || ''); return s.length >= 16 ? `${s.slice(8,10)}-${s.slice(5,7)}-${s.slice(2,4)} ${s.slice(11,16)}` : s };
+const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n };
+const fmtN = n => Number(n || 0).toLocaleString('es-CL', { maximumFractionDigits: 2 });
+const fmtCLP = n => '$' + Math.round(n || 0).toLocaleString('es-CL');
+const up = s => String(s ?? '').trim().toUpperCase();
+const isAct = x => up(x.Activo) !== 'NO';
+
+function toast(msg, cls = '') { const t = $('#toast'); t.textContent = msg; t.className = cls; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 3200) }
+function beep(ok = true) { try { const a = new (window.AudioContext || window.webkitAudioContext)(); const o = a.createOscillator(); o.frequency.value = ok ? 1150 : 300; o.connect(a.destination); o.start(); o.stop(a.currentTime + (ok ? .09 : .3)) } catch {} if (navigator.vibrate) navigator.vibrate(ok ? 40 : [80, 50, 80]) }
+function openModal(html) { $('#mBody').innerHTML = html; $('#modal').classList.add('on') }
+function closeModal() { $('#modal').classList.remove('on') }
+
+/* =================== DATOS =================== */
+let SERVER = load('ins_db', { insumos: [], areas: [], movs: [] });
+let QUEUE = load('ins_queue', []);
+let DB = { insumos: [], areas: [], movs: [] }, STK = {};
+let LAST = +localStorage.getItem('ins_last') || 0, NETERR = false, SYNCING = false;
+
+function rebuild() {
+  DB = JSON.parse(JSON.stringify(SERVER));
+  const onServer = new Set(SERVER.movs.map(m => m.OpID).filter(Boolean));
+  QUEUE.forEach(op => { if (!(op.action === 'movs' && onServer.has(op.opId))) applyOp(DB, op, true) });
+  STK = stockInfo();
+  renderAll();
+}
+function applyOp(db, op, pending) {
+  if (op.action === 'movs') {
+    op.movs.forEach(m => db.movs.push({ ...m, OpID: op.opId, _pending: pending }));
+    op.movs.filter(m => m.Tipo === 'INGRESO' && num(m.CostoUnit) > 0).forEach(m => { const i = findIns(m.Codigo, db); if (i) i.CostoUnit = m.CostoUnit });
+  } else if (op.action === 'insumos') {
+    op.data.forEach(d => { const i = db.insumos.findIndex(x => up(x.Codigo) === up(d.Codigo)); i >= 0 ? db.insumos[i] = { ...db.insumos[i], ...d } : db.insumos.push({ ...d }) });
+  } else if (op.action === 'areas') {
+    op.data.forEach(d => { const i = db.areas.findIndex(x => String(x.Area).toLowerCase() === String(d.Area).toLowerCase()); i >= 0 ? db.areas[i] = { ...db.areas[i], ...d } : db.areas.push({ ...d }) });
+  } else if (op.action === 'anular') {
+    const m = db.movs.find(x => x.ID === op.id); if (m) { m.Estado = 'ANULADO'; m.Anulacion = op.motivo; m._pending = pending }
+  }
+}
+function findIns(code, db = DB) { const c = up(code); return db.insumos.find(i => up(i.Codigo) === c) }
+function stockInfo() {
+  const m = {};
+  DB.insumos.forEach(i => m[up(i.Codigo)] = { ins: i, stock: 0, ing: 0, ent: 0, dev: 0, aj: 0, last: '' });
+  DB.movs.forEach(v => {
+    if (v.Estado === 'ANULADO') return;
+    const k = up(v.Codigo);
+    if (!m[k]) m[k] = { ins: { Codigo: k, Nombre: v.Insumo, Activo: 'NO' }, stock: 0, ing: 0, ent: 0, dev: 0, aj: 0, last: '' };
+    const r = m[k], q = num(v.Cantidad), d = num(v.Delta);
+    r.stock += d;
+    if (v.Tipo === 'INGRESO') r.ing += q; else if (v.Tipo === 'ENTREGA') r.ent += q; else if (v.Tipo === 'DEVOLUCION') r.dev += q; else r.aj += d;
+    if (String(v.FechaHora) > r.last) r.last = String(v.FechaHora);
+  });
+  return m;
+}
+const stockOf = c => STK[up(c)]?.stock || 0;
+function estado(r) { const min = num(r.ins.StockMinimo); return r.stock <= 0 ? 'SIN' : (r.stock <= min ? 'BAJO' : 'OK') }
+const estBadge = e => e === 'OK' ? '<span class="bd b-ok">OK</span>' : e === 'BAJO' ? '<span class="bd b-low">BAJO MÍNIMO</span>' : '<span class="bd b-no">SIN STOCK</span>';
+
+/* =================== COMUNICACIÓN =================== */
+function apiOk() { return API && /^https:\/\/script\.google\.com\//.test(API) }
+function jsonp(params, timeout = 25000) {
+  return new Promise((res, rej) => {
+    const cb = 'cb_' + uid(), s = document.createElement('script');
+    const t = setTimeout(() => { done(); rej(new Error('timeout')) }, timeout);
+    function done() { clearTimeout(t); delete window[cb]; s.remove() }
+    window[cb] = d => { done(); res(d) };
+    s.onerror = () => { done(); rej(new Error('red')) };
+    s.src = API + '?' + new URLSearchParams({ ...params, callback: cb, _: Date.now() });
+    document.body.appendChild(s);
+  });
+}
+async function refresh(force) {
+  if (!apiOk()) { updPill(); if (force) toast('Configura la URL del Apps Script en Admin', 'err'); return }
+  if (!KEY) { showGate(); return }
+  try {
+    const r = await jsonp({ action: 'data', key: KEY });
+    if (!r.ok && r.error === 'CLAVE') { KEY = ''; localStorage.removeItem('ins_key'); showGate(); return }
+    if (!r.ok) throw new Error(r.error);
+    SERVER = { insumos: r.insumos || [], areas: r.areas || [], movs: r.movs || [] };
+    save('ins_db', SERVER); LAST = Date.now(); localStorage.setItem('ins_last', LAST); NETERR = false;
+    if (String(r.fotosVer) !== String(FOTOS.ver)) await loadFotos();
+    rebuild(); if (force) toast('Datos actualizados', 'ok');
+  } catch (e) { NETERR = true; updPill(); if (force) toast('Sin conexión con el servidor', 'err') }
+}
+/* ---- fotos (se descargan solo cuando cambian y quedan guardadas en el equipo) ---- */
+let FOTOS = load('ins_fotos', { ver: '', map: {} });
+const fkey = (t, c) => t + '|' + String(c || '').trim().toUpperCase();
+async function loadFotos() {
+  try {
+    const r = await jsonp({ action: 'fotos' }, 60000);
+    if (!r.ok) return;
+    const map = {}; (r.fotos || []).forEach(f => { if (f.Foto) map[fkey(f.Tipo, f.Clave)] = f.Foto });
+    FOTOS = { ver: String(r.ver), map }; save('ins_fotos', FOTOS);
+  } catch (e) {}
+}
+function fotoOf(t, c) {
+  const k = fkey(t, c);
+  for (let i = QUEUE.length - 1; i >= 0; i--) { const o = QUEUE[i]; if (o.action === 'foto' && fkey(o.tipo, o.clave) === k) return o.foto || '' }
+  return FOTOS.map[k] || '';
+}
+const EMO = [[/calzad|zapat|bota/i, '🥾'], [/guante/i, '🧤'], [/cortante|cuchill|cutter|micro/i, '🔪'], [/casco/i, '⛑️'], [/lente|gafa|antiparra/i, '🥽'], [/chaleco|geólog|reflect/i, '🦺'], [/oído|auditiv|tapón/i, '🎧'], [/mascar|respir/i, '😷'], [/cinta|fleje|sello/i, '📦'], [/pila|bater|linterna/i, '🔦'], [/papel|resma|oficina/i, '📄'], [/radio/i, '📻']];
+const emoji = s => (EMO.find(([r]) => r.test(s || '')) || [0, '🧰'])[1];
+function imHtml(src, alt) { return src ? `<img src="${src}" alt="" loading="lazy">` : emoji(alt) }
+function catFoto(cat, list) { return fotoOf('CAT', cat) || (list.map(i => fotoOf('INS', i.Codigo)).find(Boolean) || '') }
+
+/* ---- selector visual: categorías → insumos ---- */
+const OPEN = { E: null, I: null }, CATS = { E: [], I: [] };
+function groupCats() { const g = {}; DB.insumos.filter(isAct).forEach(i => { const c = String(i.Categoria || '').trim() || 'Otros'; (g[c] = g[c] || []).push(i) }); Object.values(g).forEach(l => l.sort((a, b) => String(a.Nombre).localeCompare(String(b.Nombre), 'es'))); return g }
+function cartQty(k, code) { const x = CART[k].find(x => up(x.Codigo) === up(code)); return x ? num(x.qty) : 0 }
+function renderPicker(k) {
+  const el = $('#pick' + k); if (!el) return;
+  const g = groupCats(), cats = Object.keys(g).sort((a, b) => a === 'Otros' ? 1 : b === 'Otros' ? -1 : a.localeCompare(b, 'es'));
+  CATS[k] = cats;
+  if (!cats.length) { el.innerHTML = '<p class="muted">Aún no hay insumos. Créalos en Admin → Insumos.</p>'; return }
+  if (OPEN[k] && !g[OPEN[k]]) OPEN[k] = null;
+  let h = '<div class="cats">' + cats.map((c, ci) => {
+    const n = g[c].reduce((a, i) => a + cartQty(k, i.Codigo), 0);
+    return `<div class="cat ${OPEN[k] === c ? 'on' : ''}" onclick="toggleCat('${k}',${ci})"><div class="im">${imHtml(catFoto(c, g[c]), c)}</div>
+      <div class="cl"><b>${esc(c)}</b><small>${g[c].length} insumo${g[c].length > 1 ? 's' : ''} · ${OPEN[k] === c ? 'tocar para cerrar' : 'tocar para ver'}</small></div>${n ? `<span class="cb">${fmtN(n)}</span>` : ''}</div>`;
+  }).join('') + '</div>';
+  if (OPEN[k]) {
+    const list = g[OPEN[k]];
+    h += `<div class="panel" id="panel${k}"><h3><span>${esc(OPEN[k])}</span><button class="btn sm ghost" onclick="OPEN['${k}']=null;renderPicker('${k}')">✕ Cerrar</button></h3><div class="items">` + list.map(i => {
+      const q = cartQty(k, i.Codigo), s = stockOf(i.Codigo), c = esc(i.Codigo);
+      return `<div class="it ${q ? 'sel' : ''}"><div class="im" onclick="addToCart('${k}','${c}')">${imHtml(fotoOf('INS', i.Codigo), (i.Nombre || '') + ' ' + OPEN[k])}</div>${q ? `<span class="cb">${fmtN(q)}</span>` : ''}
+        <div class="cl"><b>${esc(i.Nombre)}</b><small class="${s <= 0 ? 'st0' : ''}">Stock: ${fmtN(s)} ${esc(i.Unidad || '')}</small></div>
+        ${q ? `<div class="qty"><button onclick="qtyCode('${k}','${c}',-1)">−</button><input type="number" inputmode="decimal" value="${q}" onchange="qtyCode('${k}','${c}',0,this.value)"><button onclick="qtyCode('${k}','${c}',1)">+</button></div>` : ''}</div>`;
+    }).join('') + '</div><p class="muted" style="margin:8px 0 0">Toca la foto para agregar 1 unidad. Ajusta la cantidad con − / +.</p></div>';
+  }
+  el.innerHTML = h;
+}
+function toggleCat(k, ci) { const c = CATS[k][ci]; OPEN[k] = OPEN[k] === c ? null : c; renderPicker(k); if (OPEN[k]) setTimeout(() => $('#panel' + k)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30) }
+function qtyCode(k, code, d, val) { const i = CART[k].findIndex(x => up(x.Codigo) === up(code)); if (i < 0) return; const n = val !== undefined ? num(val) : num(CART[k][i].qty) + d; if (n <= 0) CART[k].splice(i, 1); else CART[k][i].qty = n; renderCart(k) }
+
+/* ---- clave de acceso a la app completa ---- */
+let KEY = localStorage.getItem('ins_key') || '';
+function showGate() { $('#gate').style.display = 'flex'; setTimeout(() => $('#gateKey').focus(), 50) }
+async function gateIn() {
+  const k = $('#gateKey').value.trim(); if (!k) return;
+  const msg = $('#gateMsg'); msg.textContent = 'Verificando…'; msg.style.color = '';
+  try {
+    const r = await jsonp({ action: 'data', key: k });
+    if (!r.ok) { msg.style.color = 'var(--err)'; msg.textContent = r.error === 'CLAVE' ? 'Clave incorrecta. Debe ser igual a la de "const CLAVE" en el Apps Script (implementado con "Nueva versión").' : 'Error del servidor: ' + r.error; return }
+    if (!Array.isArray(r.movs)) { msg.style.color = 'var(--err)'; msg.textContent = 'El Apps Script tiene una versión antigua: pega el Code.gs nuevo e implementa con "Nueva versión".'; return }
+    msg.textContent = '';
+    KEY = k; localStorage.setItem('ins_key', k); $('#gateKey').value = ''; $('#gate').style.display = 'none';
+    refresh(); sync();
+  } catch (e) { msg.style.color = 'var(--err)'; msg.innerHTML = (e.message === 'timeout' ? 'Google no respondió con los datos (¿sesión ikea.cl abierta en este navegador?).' : 'No se pudo llegar al servidor (red bloqueada o URL mal configurada).') + ` <a href="${esc(API)}?action=ping" target="_blank">Probar ↗</a>` }
+}
+function salirApp() { if (!confirm('¿Cerrar la sesión de este equipo? Se pedirá la clave de nuevo.')) return; KEY = ''; localStorage.removeItem('ins_key'); sessionStorage.removeItem('ins_adm'); showGate() }
+function linkEntrega() { return new URL('entrega.html', location.href).href }
+function qrEntrega() {
+  if (typeof qrcode === 'undefined') return toast('No cargó la librería QR', 'err');
+  const url = linkEntrega(), w = window.open('', '_blank'); if (!w) return toast('Permite ventanas emergentes', 'err');
+  const q = qrcode(0, 'H'); q.addData(url); q.make();
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>QR Entrega de Insumos</title><style>@page{size:A4;margin:12mm}body{font-family:Arial,sans-serif;text-align:center;margin:0}
+  .p{border:6px solid #0058A3;border-radius:18px;padding:28px 20px;max-width:150mm;margin:0 auto}.p h1{color:#0058A3;font-size:30pt;margin:0}.p h2{background:#FFDB00;display:inline-block;padding:6px 16px;border-radius:8px;font-size:16pt;margin:10px 0 18px}
+  .p svg{width:110mm;height:110mm}.p p{font-size:13pt;color:#333}.u{font-size:9pt;color:#777;word-break:break-all}</style></head><body><div class="p">
+  ${LOGO_SRC ? `<img src="${LOGO_SRC}" style="height:22mm">` : ''}<h1>ENTREGA DE INSUMOS</h1><h2>Escanea con la cámara de tu celular</h2>${q.createSvgTag(6, 0)}
+  <p>Registra aquí la entrega de insumos a tu área.<br>Prevención de Pérdidas y Seguridad · IKEA CD</p><div class="u">${esc(url)}</div></div><script>setTimeout(()=>print(),400)<\/script></body></html>`);
+  w.document.close();
+}
+
+function enqueue(op) { op.opId = uid(); op.key = KEY; op.ts = Date.now(); QUEUE.push(op); save('ins_queue', QUEUE); rebuild(); sync() }
+async function sync() {
+  if (SYNCING || !apiOk()) { updPill(); return }
+  SYNCING = true; updPill();
+  try {
+    for (const op of QUEUE) {
+      if (op.sent && Date.now() - op.sent < 20000) continue;
+      await fetch(API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(op) });
+      op.sent = Date.now(); save('ins_queue', QUEUE);
+    }
+    if (QUEUE.length) {
+      const ids = QUEUE.map(o => o.opId), okIds = [];
+      for (let i = 0; i < ids.length; i += 25) { const r = await jsonp({ action: 'confirm', ids: ids.slice(i, i + 25).join(',') }); if (r.ok) okIds.push(...r.ids) }
+      if (okIds.length) { QUEUE = QUEUE.filter(o => !okIds.includes(o.opId)); save('ins_queue', QUEUE) }
+    }
+    NETERR = false;
+    SYNCING = false;
+    await refresh();
+  } catch (e) { NETERR = true }
+  SYNCING = false; updPill();
+}
+function manualSync() { if (!apiOk()) { showTab('adm'); return toast('Primero configura la URL del Apps Script', 'err') } QUEUE.forEach(o => o.sent = 0); sync().then(() => toast(QUEUE.length ? `Quedan ${QUEUE.length} pendientes` : 'Todo sincronizado', QUEUE.length ? '' : 'ok')) }
+function updPill() {
+  const p = $('#pill');
+  if (!apiOk()) { p.className = 'pill off'; p.textContent = '⚙ Configurar conexión'; return }
+  if (SYNCING) { p.className = 'pill pend'; p.textContent = '⟳ Sincronizando…'; return }
+  const n = QUEUE.length;
+  if (!navigator.onLine || NETERR) { p.className = 'pill off'; p.textContent = `⚠ Sin conexión${n ? ' · ' + n + ' pend.' : ''}`; return }
+  if (n) { p.className = 'pill pend'; p.textContent = `⏳ ${n} pendiente${n > 1 ? 's' : ''}`; return }
+  p.className = 'pill'; p.textContent = '✔ Al día ' + (LAST ? new Date(LAST).toTimeString().slice(0, 5) : '');
+}
+
+/* =================== RENDER GENERAL =================== */
+let TAB = 'ent';
+function showTab(t) {
+  TAB = t;
+  $$('.tab').forEach(s => s.classList.toggle('on', s.id === 't-' + t));
+  $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  localStorage.setItem('ins_tab', t);
+  if (t === 'ent') setTimeout(() => { if (SIG.isEmpty()) SIG.size(); $('#scanE').focus() }, 40);
+  if (t === 'ing') setTimeout(() => $('#scanI').focus(), 40);
+  renderTab();
+}
+function renderTab() { ({ stk: renderStock, mov: renderMovs, res: renderResumen, adm: renderAdmin })[TAB]?.() }
+function opts(arr, first) { return (first !== undefined ? `<option value="">${first}</option>` : '') + arr.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('') }
+function uniq(arr) { return [...new Set(arr.map(x => String(x || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es')) }
+function renderAll() {
+  const act = DB.insumos.filter(isAct);
+  $('#dlIns').innerHTML = act.map(i => `<option value="${esc(i.Codigo)} — ${esc(i.Nombre)}">`).join('');
+  $('#dlRec').innerHTML = uniq(DB.movs.map(m => m.Receptor)).map(v => `<option value="${esc(v)}">`).join('');
+  $('#dlResp').innerHTML = uniq(DB.movs.map(m => m.Responsable)).map(v => `<option value="${esc(v)}">`).join('');
+  $('#dlProv').innerHTML = uniq(DB.movs.map(m => m.Proveedor)).map(v => `<option value="${esc(v)}">`).join('');
+  $('#dlCat').innerHTML = uniq(DB.insumos.map(i => i.Categoria)).map(v => `<option value="${esc(v)}">`).join('');
+  const areas = uniq(DB.areas.filter(isAct).map(a => a.Area));
+  ['#eArea', '#iArea'].forEach(s => { const el = $(s), v = el.value; el.innerHTML = opts(areas, '— Selecciona —'); el.value = v });
+  const mA = $('#mArea'), mv = mA.value; mA.innerHTML = opts(uniq(DB.movs.map(m => m.Area)), 'Todas'); mA.value = mv;
+  const sC = $('#sC'), sv = sC.value; sC.innerHTML = opts(uniq(DB.insumos.map(i => i.Categoria)), 'Todas las categorías'); sC.value = sv;
+  renderCart('E'); renderCart('I'); updPill(); renderTab();
+}
+
+/* =================== ESCANEO / CARRITO =================== */
+const CART = { E: load('ins_cartE', []), I: load('ins_cartI', []) };
+function parseScan(t) {
+  t = String(t || '').trim(); if (!t) return {};
+  if (/^https?:\/\//i.test(t)) { try { const u = new URL(t); return { code: u.searchParams.get('i'), area: u.searchParams.get('a') } } catch {} }
+  const m = t.match(/^(.+?)\s+—\s+/); if (m) t = m[1];
+  let ins = findIns(t) || DB.insumos.find(i => String(i.Nombre).toLowerCase() === t.toLowerCase());
+  if (ins) return { code: ins.Codigo };
+  const ar = DB.areas.find(a => String(a.Area).toLowerCase() === t.toLowerCase());
+  if (ar) return { area: ar.Area };
+  return { code: t };
+}
+function onScan(k, text) {
+  const p = parseScan(text);
+  if (p.area) { const sel = k === 'E' ? $('#eArea') : $('#iArea'); const a = DB.areas.find(x => String(x.Area).toLowerCase() === String(p.area).toLowerCase()); if (a) { sel.value = a.Area; beep(); toast('Área: ' + a.Area, 'ok') } else { beep(false); toast('Área no registrada: ' + p.area, 'err') } }
+  if (p.code) addToCart(k, p.code);
+}
+function addToCart(k, code, qty = 1) {
+  const ins = findIns(code);
+  if (!ins) { beep(false); return toast('Código no encontrado: ' + code, 'err') }
+  if (!isAct(ins)) { beep(false); return toast('Insumo inactivo: ' + ins.Nombre, 'err') }
+  const ex = CART[k].find(x => up(x.Codigo) === up(ins.Codigo));
+  if (ex) ex.qty = num(ex.qty) + qty; else CART[k].unshift({ Codigo: ins.Codigo, qty, costo: num(ins.CostoUnit) });
+  beep(); renderCart(k);
+  toast(`${ins.Nombre}: ${fmtN(ex ? ex.qty : qty)}`, 'ok');
+}
+function renderCart(k) {
+  save('ins_cart' + k, CART[k]);
+  renderPicker(k);
+  const el = $('#cart' + k);
+  if (!CART[k].length) { el.innerHTML = '<p class="muted">Nada seleccionado. Toca una categoría y luego la foto del insumo, o escanea su QR.</p>'; return }
+  const compra = k === 'I' && $('#iTipo').value === 'INGRESO';
+  el.innerHTML = CART[k].map((x, i) => {
+    const ins = findIns(x.Codigo) || { Nombre: x.Codigo };
+    const s = stockOf(x.Codigo), warn = k === 'E' && num(x.qty) > s;
+    const ft = fotoOf('INS', x.Codigo);
+    return `<div class="ci ${warn ? 'warn' : ''}">
+      ${ft ? `<img class="thumb" src="${ft}" alt="">` : ''}
+      <div class="cn"><b>${esc(ins.Nombre)}</b><small>${esc(x.Codigo)} · Stock: ${fmtN(s)} ${esc(ins.Unidad || '')}${k === 'I' ? ' → ' + fmtN(s + num(x.qty)) : ''}${warn ? ' · ⚠ supera el stock' : ''}</small></div>
+      <div class="qty"><button onclick="chQty('${k}',${i},-1)">−</button><input type="number" inputmode="decimal" min="0" value="${x.qty}" onchange="setQty('${k}',${i},this.value)"><button onclick="chQty('${k}',${i},1)">+</button></div>
+      ${compra ? `<label class="cost">$ unit.<input type="number" inputmode="decimal" value="${x.costo || ''}" onchange="CART.I[${i}].costo=num(this.value);save('ins_cartI',CART.I)"></label>` : ''}
+      <button class="x" onclick="rmCart('${k}',${i})" title="Quitar">✕</button></div>`;
+  }).join('') + `<p class="muted" style="margin:8px 0 0">${CART[k].length} insumo(s) · ${fmtN(CART[k].reduce((a, x) => a + num(x.qty), 0))} unidades</p>`;
+}
+function chQty(k, i, d) { CART[k][i].qty = Math.max(0, num(CART[k][i].qty) + d); renderCart(k) }
+function setQty(k, i, v) { CART[k][i].qty = Math.max(0, num(v)); renderCart(k) }
+function rmCart(k, i) { CART[k].splice(i, 1); renderCart(k) }
+function bindScan(id, k) {
+  const el = $(id);
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { if (el.value.trim()) { e.preventDefault(); onScan(k, el.value); el.value = '' } } });
+  el.addEventListener('input', e => { if ((!e.inputType || e.inputType === 'insertReplacementText') && el.value.includes(' — ')) { onScan(k, el.value); el.value = '' } });
+}
+
+/* =================== CÁMARA QR =================== */
+let CAM = { k: null, stream: null, raf: null, h5: null };
+async function openCam(k) {
+  CAM.k = k; $('#cam').classList.add('on');
+  const v = $('#camV');
+  if ('BarcodeDetector' in window) {
+    try {
+      const det = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13', 'code_39'] });
+      CAM.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      v.style.display = 'block'; v.srcObject = CAM.stream; await v.play();
+      const loop = async () => { if (!CAM.stream) return; try { const c = await det.detect(v); if (c.length) { camHit(c[0].rawValue); return } } catch {} CAM.raf = requestAnimationFrame(loop) };
+      loop(); return;
+    } catch (e) { stopStream() }
+  }
+  v.style.display = 'none';
+  try {
+    if (!window.Html5Qrcode) await new Promise((r, j) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js'; s.onload = r; s.onerror = j; document.head.appendChild(s) });
+    CAM.h5 = new Html5Qrcode('qrReader');
+    await CAM.h5.start({ facingMode: 'environment' }, { fps: 10, qrbox: 230 }, t => camHit(t));
+  } catch (e) { closeCam(); toast('No se pudo abrir la cámara', 'err') }
+}
+function camHit(t) { const k = CAM.k; closeCam(); onScan(k, t) }
+function stopStream() { if (CAM.stream) { CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null } cancelAnimationFrame(CAM.raf) }
+function closeCam() { stopStream(); if (CAM.h5) { CAM.h5.stop().catch(() => {}).finally(() => { try { CAM.h5.clear() } catch {} CAM.h5 = null }) } $('#cam').classList.remove('on') }
+
+/* =================== FIRMA =================== */
+function SigPad(cv) {
+  const ctx = cv.getContext('2d'); let drawing = false, dirty = false, last;
+  const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top } };
+  function size() { const r = cv.getBoundingClientRect(); if (!r.width) return; const d = window.devicePixelRatio || 1; cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0); ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#111'; dirty = false }
+  cv.addEventListener('pointerdown', e => { drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId) });
+  cv.addEventListener('pointermove', e => { if (!drawing) return; const p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; dirty = true });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => cv.addEventListener(ev, () => drawing = false));
+  return {
+    size, isEmpty: () => !dirty,
+    clear: () => { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore(); dirty = false },
+    data: () => { const o = document.createElement('canvas'), w = 480, h = Math.round(w * cv.height / cv.width); o.width = w; o.height = h; const c = o.getContext('2d'); c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); c.drawImage(cv, 0, 0, w, h); return o.toDataURL('image/png') }
+  };
+}
+const SIG = SigPad($('#sigE'));
+
+/* =================== REGISTRAR ENTREGA =================== */
+function turnoAuto() { const h = new Date().getHours(); return h >= 6 && h < 14 ? 'MAÑANA' : h >= 14 && h < 22 ? 'TARDE' : 'NOCHE' }
+function stamp(d, p) { return `${p}-${String(d.getFullYear()).slice(2)}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}-${Math.random().toString(36).slice(2, 4).toUpperCase()}` }
+function regEntrega() {
+  const items = CART.E.filter(x => num(x.qty) > 0);
+  const area = $('#eArea').value, rec = up($('#eRec').value), resp = '', obs = up($('#eObs').value), turno = turnoAuto();
+  if (!items.length) return toast('Agrega al menos un insumo con cantidad', 'err');
+  if (!area) return toast('Selecciona el área que recibe', 'err');
+  if (!rec) return toast('Indica quién recibe', 'err');
+  if (FIRMA_OBLIGATORIA && SIG.isEmpty()) return toast('Falta la firma de quien recibe', 'err');
+  const over = items.filter(x => num(x.qty) > stockOf(x.Codigo));
+  if (over.length && !confirm('⚠ Estos insumos quedarán con stock negativo:\n\n' + over.map(x => `• ${findIns(x.Codigo)?.Nombre}: entregas ${x.qty}, stock ${fmtN(stockOf(x.Codigo))}`).join('\n') + '\n\n¿Registrar igual? (revisa si falta registrar un ingreso)')) return;
+  const now = new Date(), vale = stamp(now, 'E');
+  const movs = items.map((x, i) => { const ins = findIns(x.Codigo); return { ID: vale + '-' + (i + 1), ts: now.getTime(), FechaHora: fmtDT(now), Tipo: 'ENTREGA', Vale: vale, Codigo: ins.Codigo, Insumo: ins.Nombre, Unidad: ins.Unidad || '', Cantidad: num(x.qty), Delta: -num(x.qty), Area: area, Receptor: rec, Responsable: resp, Turno: turno, Proveedor: '', Documento: '', CostoUnit: num(ins.CostoUnit), Observacion: obs, Estado: 'VIGENTE' } });
+  const firma = SIG.isEmpty() ? null : SIG.data();
+  enqueue({ action: 'movs', movs, firma });
+  CART.E = []; renderCart('E'); $('#eRec').value = ''; $('#eObs').value = ''; SIG.clear();
+  valeModal(vale, movs, firma);
+}
+function valeModal(vale, movs, firma) {
+  const m = movs[0];
+  openModal(`<h3>✔ ${m.Tipo === 'ENTREGA' ? 'Entrega' : m.Tipo === 'DEVOLUCION' ? 'Devolución' : 'Ingreso'} registrada</h3>
+    <p><b>Vale:</b> ${esc(vale)}<br><b>Fecha:</b> ${showDT(m.FechaHora)}<br>
+    ${m.Area ? `<b>Área:</b> ${esc(m.Area)}<br>` : ''}${m.Receptor ? `<b>Recibe/entrega:</b> ${esc(m.Receptor)}<br>` : ''}
+    ${m.Documento ? `<b>Documento:</b> ${esc(m.Documento)} ${m.Proveedor ? '· ' + esc(m.Proveedor) : ''}<br>` : ''}
+    ${m.Responsable ? `<b>Responsable PPS:</b> ${esc(m.Responsable)}<br>` : ''}${m.Turno ? `<b>Turno:</b> ${esc(m.Turno)}` : ''}</p>
+    <table><tr><th>Insumo</th><th class="n">Cantidad</th><th class="n">Stock ahora</th></tr>
+    ${movs.map(x => `<tr><td>${esc(x.Insumo)}<br><small class="muted">${esc(x.Codigo)}</small></td><td class="n">${fmtN(x.Cantidad)} ${esc(x.Unidad)}</td><td class="n">${fmtN(stockOf(x.Codigo))}</td></tr>`).join('')}</table>
+    ${firma ? `<p class="muted">Firma:</p><img src="${firma}" style="max-width:260px;border:1px solid #ddd;border-radius:8px">` : ''}
+    <p class="muted">${QUEUE.length ? 'Guardado en el equipo; se sincroniza automáticamente con el Sheet.' : ''}</p>
+    <button class="btn y" style="width:100%" onclick="closeModal()">Continuar</button>`);
+}
+
+/* =================== REGISTRAR INGRESO =================== */
+function onTipoIng() { const dev = $('#iTipo').value === 'DEVOLUCION'; $('#iCompra').style.display = dev ? 'none' : ''; $('#iDev').style.display = dev ? '' : 'none'; renderCart('I') }
+function regIngreso() {
+  const tipo = $('#iTipo').value, items = CART.I.filter(x => num(x.qty) > 0), resp = $('#iResp').value.trim(), obs = $('#iObs').value.trim();
+  if (!items.length) return toast('Agrega al menos un insumo con cantidad', 'err');
+  if (!resp) return toast('Indica quién recibe en bodega', 'err');
+  let area = '', rec = '', prov = '', doc = '';
+  if (tipo === 'DEVOLUCION') { area = $('#iArea').value; rec = $('#iRec').value.trim(); if (!area) return toast('Selecciona el área que devuelve', 'err') }
+  else { prov = $('#iProv').value.trim(); const n = $('#iDocN').value.trim(); doc = n ? `${$('#iDocT').value} ${n}` : ''; if (!doc && !confirm('No ingresaste N° de documento (guía/factura/OC). ¿Registrar igual?')) return }
+  const now = new Date(), vale = stamp(now, tipo === 'DEVOLUCION' ? 'D' : 'I');
+  const movs = items.map((x, i) => { const ins = findIns(x.Codigo); return { ID: vale + '-' + (i + 1), ts: now.getTime(), FechaHora: fmtDT(now), Tipo: tipo, Vale: vale, Codigo: ins.Codigo, Insumo: ins.Nombre, Unidad: ins.Unidad || '', Cantidad: num(x.qty), Delta: num(x.qty), Area: area, Receptor: rec, Responsable: resp, Turno: turnoAuto(), Proveedor: prov, Documento: doc, CostoUnit: tipo === 'INGRESO' ? num(x.costo) : num(ins.CostoUnit), Observacion: obs, Estado: 'VIGENTE' } });
+  localStorage.setItem('ins_resp', resp);
+  enqueue({ action: 'movs', movs });
+  CART.I = []; renderCart('I'); ['#iDocN', '#iObs', '#iRec'].forEach(s => $(s).value = '');
+  valeModal(vale, movs);
+}
+
+/* =================== STOCK =================== */
+function stockRows() {
+  const q = $('#sQ').value.toLowerCase().trim(), f = $('#sF').value, c = $('#sC').value;
+  return Object.values(STK).filter(r => {
+    if (!isAct(r.ins) && r.stock === 0) return false;
+    if (f && estado(r) !== f) return false;
+    if (c && r.ins.Categoria !== c) return false;
+    if (q && !`${r.ins.Codigo} ${r.ins.Nombre} ${r.ins.Categoria} ${r.ins.Ubicacion}`.toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a, b) => ({ SIN: 0, BAJO: 1, OK: 2 }[estado(a)] - { SIN: 0, BAJO: 1, OK: 2 }[estado(b)]) || String(a.ins.Nombre).localeCompare(String(b.ins.Nombre), 'es'));
+}
+function renderStock() {
+  const all = Object.values(STK).filter(r => isAct(r.ins) || r.stock !== 0);
+  const val = all.reduce((a, r) => a + Math.max(r.stock, 0) * num(r.ins.CostoUnit), 0);
+  const low = all.filter(r => estado(r) === 'BAJO').length, none = all.filter(r => estado(r) === 'SIN').length;
+  $('#sK').innerHTML = `<div class="kpi"><b>${all.length}</b><span>Insumos en catálogo</span></div>
+    <div class="kpi g"><b>${fmtN(all.reduce((a, r) => a + Math.max(r.stock, 0), 0))}</b><span>Unidades en bodega</span></div>
+    <div class="kpi"><b>${fmtCLP(val)}</b><span>Stock valorizado</span></div>
+    <div class="kpi y"><b>${low}</b><span>Bajo mínimo</span></div>
+    <div class="kpi r"><b>${none}</b><span>Sin stock</span></div>`;
+  const rows = stockRows();
+  $('#sT').innerHTML = `<tr><th>Código</th><th>Insumo</th><th>Categoría</th><th>Ubicación</th><th class="n">Stock</th><th class="n">Mín.</th><th>Estado</th><th class="n">Ingresado</th><th class="n">Entregado</th><th class="n">Devuelto</th><th class="n">Ajustes</th><th class="n">Valor</th><th>Últ. mov.</th></tr>` +
+    (rows.map(r => `<tr class="click" onclick="kardex('${esc(r.ins.Codigo)}')"><td>${esc(r.ins.Codigo)}</td><td><b>${esc(r.ins.Nombre)}</b></td><td>${esc(r.ins.Categoria)}</td><td>${esc(r.ins.Ubicacion)}</td><td class="n"><b>${fmtN(r.stock)}</b> ${esc(r.ins.Unidad || '')}</td><td class="n">${fmtN(r.ins.StockMinimo)}</td><td>${estBadge(estado(r))}</td><td class="n">${fmtN(r.ing)}</td><td class="n">${fmtN(r.ent)}</td><td class="n">${fmtN(r.dev)}</td><td class="n">${fmtN(r.aj)}</td><td class="n">${fmtCLP(Math.max(r.stock, 0) * num(r.ins.CostoUnit))}</td><td>${showDT(r.last)}</td></tr>`).join('') || '<tr><td colspan="13" class="muted">Sin insumos. Créalos en Admin → Insumos.</td></tr>');
+}
+function exportStock() { xls(stockRows().map(r => ({ Codigo: r.ins.Codigo, Insumo: r.ins.Nombre, Categoria: r.ins.Categoria, Unidad: r.ins.Unidad, Ubicacion: r.ins.Ubicacion, StockActual: r.stock, StockMinimo: num(r.ins.StockMinimo), Estado: { OK: 'OK', BAJO: 'BAJO MÍNIMO', SIN: 'SIN STOCK' }[estado(r)], Ingresado: r.ing, Entregado: r.ent, Devuelto: r.dev, Ajustes: r.aj, CostoUnit: num(r.ins.CostoUnit), Valorizado: Math.max(r.stock, 0) * num(r.ins.CostoUnit), UltimoMovimiento: r.last })), 'Stock_Insumos') }
+function kardex(code) {
+  const r = STK[up(code)]; if (!r) return;
+  const ms = DB.movs.filter(m => up(m.Codigo) === up(code)).sort((a, b) => String(a.FechaHora).localeCompare(String(b.FechaHora)));
+  let saldo = 0;
+  const rows = ms.map(m => { if (m.Estado !== 'ANULADO') saldo += num(m.Delta); return { m, saldo } }).reverse();
+  openModal(`<h3>Kardex · ${esc(r.ins.Nombre)}</h3>
+    <p class="muted">${esc(r.ins.Codigo)} · ${esc(r.ins.Categoria || '')} · Ubicación: ${esc(r.ins.Ubicacion || '—')} · Stock actual <b>${fmtN(r.stock)} ${esc(r.ins.Unidad || '')}</b> · Mín. ${fmtN(r.ins.StockMinimo)}</p>
+    <div class="tw" style="max-height:55vh"><table><tr><th>Fecha</th><th>Tipo</th><th class="n">Mov.</th><th class="n">Saldo</th><th>Área / Doc.</th><th>Persona</th></tr>
+    ${rows.map(({ m, saldo }) => `<tr class="${m.Estado === 'ANULADO' ? 'anul' : ''}"><td>${showDT(m.FechaHora)}</td><td><span class="bd b-${m.Tipo}">${m.Tipo}</span>${m._pending ? ' <span class="bd b-pend">pend.</span>' : ''}</td><td class="n" style="color:${num(m.Delta) < 0 ? 'var(--err)' : 'var(--ok)'}">${num(m.Delta) > 0 ? '+' : ''}${fmtN(m.Delta)}</td><td class="n"><b>${fmtN(saldo)}</b></td><td>${esc(m.Area || m.Documento || m.Observacion)}</td><td>${esc(m.Receptor || m.Responsable)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Sin movimientos</td></tr>'}
+    </table></div>
+    <div class="row" style="margin-top:10px"><button class="btn sm" onclick="xls(DB.movs.filter(m=>up(m.Codigo)==='${esc(up(code))}').map(cleanMov),'Kardex_${esc(up(code))}')">⬇ Excel</button><button class="btn sm y" onclick="printLabels('one','${esc(r.ins.Codigo)}')">🏷 Etiqueta QR</button><button class="btn sm ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
+
+/* =================== MOVIMIENTOS =================== */
+function filtMovs() {
+  const d1 = $('#mD1').value, d2 = $('#mD2').value, tp = $('#mTipo').value, ar = $('#mArea').value, q = $('#mQ').value.toLowerCase().trim();
+  return DB.movs.filter(m => {
+    const f = String(m.FechaHora).slice(0, 10);
+    if (d1 && f < d1) return false; if (d2 && f > d2) return false;
+    if (tp && m.Tipo !== tp) return false; if (ar && m.Area !== ar) return false;
+    if (q && !`${m.Codigo} ${m.Insumo} ${m.Receptor} ${m.Responsable} ${m.Vale} ${m.Documento} ${m.Proveedor} ${m.Observacion}`.toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a, b) => String(b.FechaHora).localeCompare(String(a.FechaHora)));
+}
+function renderMovs() {
+  const ms = filtMovs(), show = ms.slice(0, 400), adm = isAdm();
+  const vig = ms.filter(m => m.Estado !== 'ANULADO');
+  $('#mInfo').textContent = `${ms.length} movimientos · Entregado: ${fmtN(vig.filter(m => m.Tipo === 'ENTREGA').reduce((a, m) => a + num(m.Cantidad), 0))} un. · Ingresado: ${fmtN(vig.filter(m => m.Tipo === 'INGRESO').reduce((a, m) => a + num(m.Cantidad), 0))} un.${ms.length > 400 ? ' · mostrando los 400 más recientes (el Excel trae todo)' : ''}`;
+  $('#mT').innerHTML = `<tr><th>Fecha</th><th>Tipo</th><th>Vale</th><th>Insumo</th><th class="n">Cant.</th><th>Área</th><th>Recibe / devuelve</th><th>Responsable</th><th>Doc. / Proveedor</th><th>Obs.</th><th>Firma</th><th></th></tr>` +
+    (show.map(m => `<tr class="${m.Estado === 'ANULADO' ? 'anul' : ''}"><td>${showDT(m.FechaHora)}</td><td><span class="bd b-${m.Tipo}">${m.Tipo}</span>${m._pending ? ' <span class="bd b-pend">pend.</span>' : ''}${m.Estado === 'ANULADO' ? ' <span class="bd b-ANULADO" title="' + esc(m.Anulacion) + '">ANULADO</span>' : ''}</td>
+      <td><a href="#" onclick="verVale('${esc(m.Vale)}');return false">${esc(m.Vale)}</a></td><td>${esc(m.Insumo)}<br><small class="muted">${esc(m.Codigo)}</small></td>
+      <td class="n" style="color:${num(m.Delta) < 0 ? 'var(--err)' : 'var(--ok)'}"><b>${num(m.Delta) > 0 ? '+' : ''}${fmtN(m.Delta)}</b></td><td>${esc(m.Area)}</td><td>${esc(m.Receptor)}</td><td>${esc(m.Responsable)}</td>
+      <td>${esc(m.Documento)}${m.Proveedor ? '<br><small class="muted">' + esc(m.Proveedor) + '</small>' : ''}</td><td>${esc(m.Observacion)}</td>
+      <td>${/^https/.test(m.FirmaURL) ? `<a href="${esc(m.FirmaURL)}" target="_blank">Ver</a>` : ''}</td>
+      <td>${adm && m.Estado !== 'ANULADO' && !m._pending ? `<button class="btn sm red" onclick="anular('${esc(m.ID)}')">Anular</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="12" class="muted">Sin movimientos para el filtro</td></tr>');
+}
+function verVale(v) { const ms = DB.movs.filter(m => m.Vale === v); if (ms.length) valeModal(v, ms, null); const f = ms.find(m => /^https/.test(m.FirmaURL)); if (f) $('#mBody').insertAdjacentHTML('beforeend', `<p><a href="${esc(f.FirmaURL)}" target="_blank">Ver firma en Drive ↗</a></p>`) }
+function cleanMov(m) { return { Fecha: m.FechaHora, Tipo: m.Tipo, Vale: m.Vale, Codigo: m.Codigo, Insumo: m.Insumo, Unidad: m.Unidad, Cantidad: num(m.Cantidad), Movimiento: num(m.Delta), Area: m.Area, Receptor: m.Receptor, Responsable: m.Responsable, Turno: m.Turno, Proveedor: m.Proveedor, Documento: m.Documento, CostoUnit: num(m.CostoUnit), Total: num(m.Cantidad) * num(m.CostoUnit), Observacion: m.Observacion, Estado: m._pending ? 'PENDIENTE SYNC' : m.Estado, Anulacion: m.Anulacion || '', Firma: m.FirmaURL || '' } }
+function exportMovs() { xls(filtMovs().map(cleanMov), 'Movimientos_Insumos') }
+function anular(id) {
+  if (!askPin()) return;
+  const m = DB.movs.find(x => x.ID === id); if (!m) return;
+  const mot = prompt(`Anular ${m.Tipo} de ${fmtN(m.Cantidad)} × ${m.Insumo} (${m.Vale}).\n\nEl registro NO se borra: queda marcado ANULADO y deja de contar en el stock.\n\nMotivo:`);
+  if (!mot || !mot.trim()) return;
+  const who = prompt('¿Quién anula?', localStorage.getItem('ins_resp') || '') || '';
+  enqueue({ action: 'anular', id, motivo: `${fmtDT(new Date())} · ${who} · ${mot.trim()}` });
+  toast('Movimiento anulado', 'ok');
+}
+
+/* =================== RESUMEN =================== */
+const CH = {};
+function chart(id, cfg) { if (typeof Chart === 'undefined') return; if (CH[id]) CH[id].destroy(); CH[id] = new Chart($('#' + id), cfg) }
+function rango(t) { const d = new Date(); let a, b; if (t === 'mes') { a = new Date(d.getFullYear(), d.getMonth(), 1); b = d } else if (t === 'ant') { a = new Date(d.getFullYear(), d.getMonth() - 1, 1); b = new Date(d.getFullYear(), d.getMonth(), 0) } else { a = new Date(d.getFullYear(), 0, 1); b = d } $('#rD1').value = ymd(a); $('#rD2').value = ymd(b); renderResumen() }
+function resMovs() { const d1 = $('#rD1').value, d2 = $('#rD2').value; return DB.movs.filter(m => m.Estado !== 'ANULADO' && (!d1 || String(m.FechaHora).slice(0, 10) >= d1) && (!d2 || String(m.FechaHora).slice(0, 10) <= d2)) }
+function sumBy(arr, key, val = m => num(m.Cantidad)) { const o = {}; arr.forEach(m => { const k = key(m) || '(sin dato)'; o[k] = (o[k] || 0) + val(m) }); return Object.entries(o).sort((a, b) => b[1] - a[1]) }
+function renderResumen() {
+  if (!$('#rD1').value && !$('#rD2').value) { rango('mes'); return }
+  const ms = resMovs(), ent = ms.filter(m => m.Tipo === 'ENTREGA'), ing = ms.filter(m => m.Tipo === 'INGRESO'), dev = ms.filter(m => m.Tipo === 'DEVOLUCION');
+  const all = Object.values(STK).filter(r => isAct(r.ins));
+  const val = m => num(m.Cantidad) * num(m.CostoUnit);
+  $('#rK').innerHTML = `<div class="kpi"><b>${new Set(ent.map(m => m.Vale)).size}</b><span>Entregas (vales)</span></div>
+    <div class="kpi"><b>${fmtN(ent.reduce((a, m) => a + num(m.Cantidad), 0))}</b><span>Unidades entregadas</span></div>
+    <div class="kpi"><b>${fmtCLP(ent.reduce((a, m) => a + val(m), 0))}</b><span>Valor entregado</span></div>
+    <div class="kpi g"><b>${fmtN(ing.reduce((a, m) => a + num(m.Cantidad), 0))}</b><span>Unidades ingresadas</span></div>
+    <div class="kpi g"><b>${fmtCLP(ing.reduce((a, m) => a + val(m), 0))}</b><span>Valor comprado</span></div>
+    <div class="kpi"><b>${fmtN(dev.reduce((a, m) => a + num(m.Cantidad), 0))}</b><span>Unidades devueltas</span></div>
+    <div class="kpi y"><b>${all.filter(r => estado(r) !== 'OK').length}</b><span>Insumos bajo mínimo / sin stock (hoy)</span></div>`;
+  const byA = sumBy(ent, m => m.Area), top = sumBy(ent, m => m.Insumo).slice(0, 10);
+  const base = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+  chart('cArea', { type: 'bar', data: { labels: byA.map(x => x[0]), datasets: [{ data: byA.map(x => x[1]), backgroundColor: '#0058A3', borderRadius: 6 }] }, options: base });
+  chart('cTop', { type: 'bar', data: { labels: top.map(x => x[0]), datasets: [{ data: top.map(x => x[1]), backgroundColor: '#FFDB00', borderColor: '#c9a800', borderWidth: 1, borderRadius: 6 }] }, options: { ...base, indexAxis: 'y' } });
+  const now = new Date(), months = [];
+  for (let i = 11; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); months.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`) }
+  const vig = DB.movs.filter(m => m.Estado !== 'ANULADO'), mm = (t, k) => vig.filter(m => m.Tipo === t && String(m.FechaHora).slice(0, 7) === k).reduce((a, m) => a + num(m.Cantidad), 0);
+  chart('cMes', { type: 'bar', data: { labels: months.map(k => { const [y, m] = k.split('-'); return ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m - 1] + ' ' + y.slice(2) }), datasets: [{ label: 'Ingresado', data: months.map(k => mm('INGRESO', k)), backgroundColor: '#0a8a4a', borderRadius: 4 }, { label: 'Entregado', data: months.map(k => mm('ENTREGA', k)), backgroundColor: '#0058A3', borderRadius: 4 }] }, options: { ...base, plugins: { legend: { display: true } } } });
+  const det = detalleArea();
+  $('#rT').innerHTML = `<tr><th>Área</th><th>Insumo</th><th class="n">Unidades</th><th class="n">Entregas</th><th class="n">Valor</th><th>Última entrega</th></tr>` + (det.map(d => `<tr><td>${esc(d.Area)}</td><td>${esc(d.Insumo)}</td><td class="n">${fmtN(d.Unidades)}</td><td class="n">${d.Entregas}</td><td class="n">${fmtCLP(d.Valor)}</td><td>${showDT(d.Ultima)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Sin entregas en el período</td></tr>');
+}
+function detalleArea() {
+  const o = {};
+  resMovs().filter(m => m.Tipo === 'ENTREGA').forEach(m => { const k = m.Area + '|' + m.Codigo; const r = o[k] || (o[k] = { Area: m.Area, Codigo: m.Codigo, Insumo: m.Insumo, Unidades: 0, Entregas: 0, Valor: 0, Ultima: '' }); r.Unidades += num(m.Cantidad); r.Entregas++; r.Valor += num(m.Cantidad) * num(m.CostoUnit); if (String(m.FechaHora) > r.Ultima) r.Ultima = String(m.FechaHora) });
+  return Object.values(o).sort((a, b) => a.Area.localeCompare(b.Area, 'es') || b.Unidades - a.Unidades);
+}
+function exportResumen() { xls(detalleArea(), `Entregas_por_area_${$('#rD1').value}_a_${$('#rD2').value}`) }
+
+/* =================== EXCEL =================== */
+function xls(rows, name) { if (typeof XLSX === 'undefined') return toast('No cargó la librería Excel', 'err'); if (!rows.length) return toast('No hay datos para exportar', 'err'); const ws = XLSX.utils.json_to_sheet(rows), wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Datos'); XLSX.writeFile(wb, name + '_' + ymd(new Date()) + '.xlsx') }
+
+/* =================== ADMIN =================== */
+const isAdm = () => sessionStorage.getItem('ins_adm') === '1';
+function askPin() { if (isAdm()) return true; const p = prompt('PIN de administrador'); if (p === ADMIN_PIN) { sessionStorage.setItem('ins_adm', '1'); return true } if (p !== null) toast('PIN incorrecto', 'err'); return false }
+function unlock() { if ($('#pin').value === ADMIN_PIN) { sessionStorage.setItem('ins_adm', '1'); $('#pin').value = ''; renderAdmin() } else toast('PIN incorrecto', 'err') }
+function lockAdm() { sessionStorage.removeItem('ins_adm'); renderAdmin() }
+let ASUB = 'ins';
+function renderAdmin() {
+  $('#admLock').style.display = isAdm() ? 'none' : ''; $('#admBody').style.display = isAdm() ? '' : 'none';
+  if (!isAdm()) return;
+  $$('#admSub button').forEach(b => b.classList.toggle('on', b.dataset.s === ASUB));
+  $$('.asec').forEach(s => s.classList.toggle('on', s.id === 'a-' + ASUB));
+  if (!$('#aCod').value && !EDIT) $('#aCod').value = nextCode();
+  renderAdmIns(); renderAreas(); renderCats();
+  const cv = $('#cCod').value; $('#cCod').innerHTML = '<option value="">— Selecciona —</option>' + DB.insumos.filter(isAct).sort((a, b) => String(a.Nombre).localeCompare(String(b.Nombre), 'es')).map(i => `<option value="${esc(i.Codigo)}">${esc(i.Nombre)} (${esc(i.Codigo)})</option>`).join(''); $('#cCod').value = cv; onConteo();
+  $('#cfgApi').value = apiOk() ? API : ''; $('#lnkEnt').value = linkEntrega();
+  $('#qInfo').innerHTML = QUEUE.length ? QUEUE.map(o => `• ${o.action} ${o.movs ? o.movs.length + ' mov. ' + (o.movs[0].Vale || '') : o.data ? o.data.length + ' reg.' : o.id || ''} · ${new Date(o.ts).toLocaleString('es-CL')}`).join('<br>') : 'No hay registros pendientes ✔';
+}
+function nextCode() { const n = DB.insumos.map(i => String(i.Codigo).match(/^INS-(\d+)$/i)).filter(Boolean).map(m => +m[1]); return 'INS-' + String((n.length ? Math.max(...n) : 0) + 1).padStart(3, '0') }
+let EDIT = null, EDIT_FOTO, CAT_EDIT = null;
+function resizeImg(file, max = 360) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => { const im = new Image(); im.onload = () => {
+      let sz = max, q = .72, out = '';
+      for (let t = 0; t < 6; t++) {
+        const sc = Math.min(1, sz / Math.max(im.width, im.height)), c = document.createElement('canvas');
+        c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc);
+        const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+        out = c.toDataURL('image/jpeg', q); if (out.length < 45000) break; sz = Math.round(sz * .8); q = Math.max(.45, q - .08);
+      }
+      res(out);
+    }; im.onerror = rej; im.src = fr.result };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+function showFotoPrev(src) { $('#aFotoPrev').innerHTML = src ? `<img src="${src}" alt="">` : '📷' }
+async function pickFoto(inp) { const f = inp.files[0]; if (!f) return; try { EDIT_FOTO = await resizeImg(f); showFotoPrev(EDIT_FOTO) } catch { toast('No se pudo leer la imagen', 'err') } inp.value = '' }
+function renderCats() {
+  const g = groupCats(), cats = Object.keys(g).sort((a, b) => a.localeCompare(b, 'es'));
+  $('#catT').innerHTML = '<tr><th>Foto</th><th>Categoría</th><th class="n">Insumos</th><th></th></tr>' + (cats.map((c, i) => { const own = fotoOf('CAT', c), f = catFoto(c, g[c]);
+    return `<tr><td>${f ? `<img class="thumb" src="${f}">` : `<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:24px">${emoji(c)}</div>`}</td><td><b>${esc(c)}</b>${!own && f ? '<br><small class="muted">usando foto de un insumo</small>' : ''}</td><td class="n">${g[c].length}</td>
+    <td style="white-space:nowrap"><button class="btn sm y" onclick="CAT_EDIT=CATS_ADM[${i}];$('#catFile').click()">📷 Foto</button> ${own ? `<button class="btn sm ghost" onclick="enqueue({action:'foto',tipo:'CAT',clave:CATS_ADM[${i}],foto:''})">Quitar</button>` : ''}</td></tr>` }).join('') || '<tr><td colspan="4" class="muted">Crea insumos con categoría para verlas aquí</td></tr>');
+  window.CATS_ADM = cats;
+}
+async function pickCatFoto(inp) { const f = inp.files[0]; inp.value = ''; if (!f || !CAT_EDIT) return; try { const d = await resizeImg(f); enqueue({ action: 'foto', tipo: 'CAT', clave: CAT_EDIT, foto: d }); toast('Foto de categoría guardada', 'ok') } catch { toast('No se pudo leer la imagen', 'err') } }
+function newInsumo() { EDIT = null; EDIT_FOTO = undefined; showFotoPrev(''); $('#aInsTit').textContent = 'Nuevo insumo'; $('#aCod').readOnly = false; $('#aCod').value = nextCode(); ['#aNom', '#aCat', '#aUbi'].forEach(s => $(s).value = ''); $('#aUni').value = 'UN'; $('#aMin').value = 0; $('#aCos').value = 0; $('#aAct').value = 'SI'; $('#aIni').value = 0; $('#aIniL').style.display = '' }
+function editInsumo(code) { const i = findIns(code); if (!i) return; EDIT = i.Codigo; EDIT_FOTO = undefined; showFotoPrev(fotoOf('INS', i.Codigo)); $('#aInsTit').textContent = 'Editar insumo ' + i.Codigo; $('#aCod').value = i.Codigo; $('#aCod').readOnly = true; $('#aNom').value = i.Nombre || ''; $('#aCat').value = i.Categoria || ''; $('#aUni').value = i.Unidad || ''; $('#aMin').value = num(i.StockMinimo); $('#aUbi').value = i.Ubicacion || ''; $('#aCos').value = num(i.CostoUnit); $('#aAct').value = isAct(i) ? 'SI' : 'NO'; $('#aIniL').style.display = 'none'; window.scrollTo({ top: 0, behavior: 'smooth' }) }
+function saveInsumo() {
+  const d = { Codigo: up($('#aCod').value), Nombre: $('#aNom').value.trim(), Categoria: $('#aCat').value.trim(), Unidad: up($('#aUni').value) || 'UN', StockMinimo: num($('#aMin').value), Ubicacion: $('#aUbi').value.trim(), CostoUnit: num($('#aCos').value), Activo: $('#aAct').value };
+  if (!d.Codigo || !d.Nombre) return toast('Código y nombre son obligatorios', 'err');
+  if (/[\s?&#'"\\]/.test(d.Codigo)) return toast('El código no puede tener espacios, comillas ni ? & #', 'err');
+  const exists = findIns(d.Codigo);
+  if (exists && !EDIT && !confirm(`El código ${d.Codigo} ya existe (${exists.Nombre}). ¿Sobrescribir sus datos?`)) return;
+  const ini = !exists ? num($('#aIni').value) : 0;
+  enqueue({ action: 'insumos', data: [d] });
+  if (EDIT_FOTO !== undefined) enqueue({ action: 'foto', tipo: 'INS', clave: d.Codigo, foto: EDIT_FOTO });
+  if (ini) stockInicial([{ ...d, StockInicial: ini }]);
+  toast('Insumo guardado', 'ok'); newInsumo();
+}
+function stockInicial(list) {
+  const now = new Date(), vale = stamp(now, 'A'), resp = localStorage.getItem('ins_resp') || 'Admin';
+  const movs = list.filter(x => num(x.StockInicial)).map((x, i) => ({ ID: vale + '-' + (i + 1), ts: now.getTime(), FechaHora: fmtDT(now), Tipo: 'AJUSTE', Vale: vale, Codigo: x.Codigo, Insumo: x.Nombre, Unidad: x.Unidad || '', Cantidad: Math.abs(num(x.StockInicial)), Delta: num(x.StockInicial), Area: '', Receptor: '', Responsable: resp, Turno: turnoAuto(), Proveedor: '', Documento: '', CostoUnit: num(x.CostoUnit), Observacion: 'Stock inicial', Estado: 'VIGENTE' }));
+  if (movs.length) enqueue({ action: 'movs', movs });
+}
+function renderAdmIns() {
+  const q = ($('#aQ').value || '').toLowerCase();
+  const list = DB.insumos.filter(i => !q || `${i.Codigo} ${i.Nombre} ${i.Categoria} ${i.Ubicacion}`.toLowerCase().includes(q)).sort((a, b) => String(a.Nombre).localeCompare(String(b.Nombre), 'es'));
+  $('#aT').innerHTML = `<tr><th><input type="checkbox" style="width:auto;margin:0" onchange="$$('.selIns').forEach(c=>c.checked=this.checked)"></th><th>Foto</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Unidad</th><th class="n">Mín.</th><th>Ubicación</th><th class="n">Costo</th><th class="n">Stock</th><th>Activo</th><th></th></tr>` +
+    (list.map(i => `<tr><td><input type="checkbox" class="selIns" value="${esc(i.Codigo)}" style="width:auto;margin:0"></td><td>${fotoOf('INS', i.Codigo) ? `<img class="thumb" src="${fotoOf('INS', i.Codigo)}">` : ''}</td><td>${esc(i.Codigo)}</td><td><b>${esc(i.Nombre)}</b></td><td>${esc(i.Categoria)}</td><td>${esc(i.Unidad)}</td><td class="n">${fmtN(i.StockMinimo)}</td><td>${esc(i.Ubicacion)}</td><td class="n">${fmtCLP(i.CostoUnit)}</td><td class="n">${fmtN(stockOf(i.Codigo))}</td><td>${isAct(i) ? 'SI' : '<span class="bd b-no">NO</span>'}</td><td style="white-space:nowrap"><button class="btn sm ghost" onclick="editInsumo('${esc(i.Codigo)}')">Editar</button> <button class="btn sm y" onclick="printLabels('one','${esc(i.Codigo)}')">QR</button></td></tr>`).join('') || '<tr><td colspan="12" class="muted">Sin insumos</td></tr>');
+}
+function saveArea() { const d = { Area: $('#arN').value.trim(), Responsable: $('#arR').value.trim(), Activo: $('#arA').value }; if (!d.Area) return toast('Nombre del área obligatorio', 'err'); enqueue({ action: 'areas', data: [d] }); $('#arN').value = ''; $('#arR').value = ''; toast('Área guardada', 'ok') }
+function renderAreas() {
+  $('#arT').innerHTML = `<tr><th>Área</th><th>Responsable</th><th>Activa</th><th class="n">Unid. entregadas (total)</th><th></th></tr>` + (DB.areas.slice().sort((a, b) => String(a.Area).localeCompare(String(b.Area), 'es')).map(a => `<tr><td><b>${esc(a.Area)}</b></td><td>${esc(a.Responsable)}</td><td>${isAct(a) ? 'SI' : 'NO'}</td><td class="n">${fmtN(DB.movs.filter(m => m.Tipo === 'ENTREGA' && m.Estado !== 'ANULADO' && m.Area === a.Area).reduce((s, m) => s + num(m.Cantidad), 0))}</td><td><button class="btn sm ghost" onclick="$('#arN').value=this.dataset.a;$('#arR').value=this.dataset.r;$('#arA').value=this.dataset.s" data-a="${esc(a.Area)}" data-r="${esc(a.Responsable)}" data-s="${isAct(a) ? 'SI' : 'NO'}">Editar</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">Crea las áreas que reciben insumos (ej: Recepción, Despacho, Home Delivery, Mantención…)</td></tr>');
+}
+function onConteo() { const c = $('#cCod').value; if (!c) { $('#cSys').value = ''; $('#cDif').value = ''; return } const s = stockOf(c); $('#cSys').value = fmtN(s); const n = $('#cCnt').value; $('#cDif').value = n === '' ? '' : (num(n) - s > 0 ? '+' : '') + fmtN(num(n) - s) }
+function saveConteo() {
+  const c = $('#cCod').value, n = $('#cCnt').value, resp = $('#cResp').value.trim(), mot = $('#cMot').value.trim();
+  if (!c || n === '' || !resp || !mot) return toast('Completa insumo, cantidad contada, responsable y motivo', 'err');
+  const ins = findIns(c), d = num(n) - stockOf(c);
+  if (d === 0) return toast('Sin diferencia: el stock cuadra ✔', 'ok');
+  if (!confirm(`Ajustar ${ins.Nombre}: ${d > 0 ? '+' : ''}${fmtN(d)} ${ins.Unidad || ''}\nStock quedará en ${fmtN(num(n))}.`)) return;
+  const now = new Date(), vale = stamp(now, 'A');
+  enqueue({ action: 'movs', movs: [{ ID: vale + '-1', ts: now.getTime(), FechaHora: fmtDT(now), Tipo: 'AJUSTE', Vale: vale, Codigo: ins.Codigo, Insumo: ins.Nombre, Unidad: ins.Unidad || '', Cantidad: Math.abs(d), Delta: d, Area: '', Receptor: '', Responsable: resp, Turno: turnoAuto(), Proveedor: '', Documento: 'Conteo físico: ' + fmtN(num(n)), CostoUnit: num(ins.CostoUnit), Observacion: mot, Estado: 'VIGENTE' }] });
+  $('#cCnt').value = ''; $('#cMot').value = ''; onConteo(); toast('Ajuste registrado', 'ok');
+}
+function saveApi() { const v = $('#cfgApi').value.trim(); if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(v)) return toast('La URL debe ser de script.google.com y terminar en /exec', 'err'); API = v; localStorage.setItem('ins_api', v); toast('URL guardada', 'ok'); refresh(true); sync() }
+function dropQueue() { if (!QUEUE.length) return; if (!confirm(`Se eliminarán ${QUEUE.length} registros NO sincronizados de este equipo. Esto no se puede deshacer. ¿Continuar?`)) return; QUEUE = []; save('ins_queue', QUEUE); rebuild() }
+function plantilla() { xls([{ Codigo: 'INS-001', Nombre: 'Guantes de nitrilo talla L', Categoria: 'EPP', Unidad: 'PAR', StockMinimo: 20, Ubicacion: 'Rack A-1', CostoUnit: 450, StockInicial: 100 }], 'Plantilla_Insumos') }
+function importXls(inp) {
+  const f = inp.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' }), rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+      const norm = o => { const n = {}; Object.keys(o).forEach(k => n[k.toLowerCase().replace(/[\s_áéíóú]/g, c => ({ 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u' }[c] || ''))] = o[k]); return n };
+      const list = rows.map(norm).map(o => ({ Codigo: up(o.codigo), Nombre: String(o.nombre || '').trim(), Categoria: String(o.categoria || '').trim(), Unidad: up(o.unidad) || 'UN', StockMinimo: num(o.stockminimo), Ubicacion: String(o.ubicacion || '').trim(), CostoUnit: num(o.costounit || o.costo), Activo: 'SI', StockInicial: num(o.stockinicial) })).filter(x => x.Codigo && x.Nombre);
+      if (!list.length) return toast('No se encontraron filas válidas (revisa columnas Codigo y Nombre)', 'err');
+      const nuevos = list.filter(x => !findIns(x.Codigo));
+      if (!confirm(`${list.length} insumos (${nuevos.length} nuevos, ${list.length - nuevos.length} a actualizar).\nStock inicial a cargar en ${nuevos.filter(x => x.StockInicial).length} insumos nuevos.\n\n¿Importar?`)) return;
+      enqueue({ action: 'insumos', data: list.map(({ StockInicial, ...d }) => d) });
+      stockInicial(nuevos);
+      toast('Importación en curso', 'ok');
+    } catch (err) { toast('No se pudo leer el archivo', 'err') } finally { inp.value = '' }
+  };
+  r.readAsArrayBuffer(f);
+}
+
+/* =================== ETIQUETAS QR =================== */
+function qrSvg(text) { const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createSvgTag(4, 0) }
+function printLabels(mode, code) {
+  if (typeof qrcode === 'undefined') return toast('No cargó la librería QR', 'err');
+  const base = linkEntrega();
+  let items = [];
+  if (mode === 'areas') items = DB.areas.filter(isAct).map(a => ({ url: base + '?a=' + encodeURIComponent(a.Area), t: a.Area, s: 'ÁREA · escanear para seleccionar' }));
+  else {
+    let ins = mode === 'one' ? [findIns(code)] : mode === 'all' ? DB.insumos.filter(isAct) : $$('.selIns:checked').map(c => findIns(c.value));
+    items = ins.filter(Boolean).map(i => ({ url: base + '?i=' + encodeURIComponent(i.Codigo), t: i.Nombre, s: i.Codigo + (i.Ubicacion ? ' · ' + i.Ubicacion : '') }));
+  }
+  if (!items.length) return toast(mode === 'sel' ? 'Marca insumos en Admin → Insumos' : 'No hay elementos', 'err');
+  const sz = { s: [4, 3, 2.2, 8], m: [6, 4, 3.2, 10], l: [9, 6, 4.8, 14] }[$('#qSize')?.value || 'm'];
+  const w = window.open('', '_blank');
+  if (!w) return toast('Permite ventanas emergentes para imprimir', 'err');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Etiquetas QR Insumos</title><style>
+    @page{margin:8mm}body{font-family:Arial,sans-serif;margin:0}
+    .g{display:flex;flex-wrap:wrap;gap:3mm}
+    .l{width:${sz[0]}cm;height:${sz[1]}cm;border:1px dashed #999;display:flex;align-items:center;gap:2mm;padding:2mm;box-sizing:border-box;page-break-inside:avoid;overflow:hidden}
+    .l svg{width:${sz[2]}cm;height:${sz[2]}cm;flex:0 0 auto}
+    .tx{min-width:0}.tx b{display:block;font-size:${sz[3]}pt;line-height:1.15;color:#0058A3}.tx span{font-size:${sz[3] - 2}pt;color:#333}
+    .tx i{display:block;font-size:${Math.max(sz[3] - 4, 6)}pt;color:#777;font-style:normal;margin-top:1mm;border-top:2px solid #FFDB00;padding-top:1mm}
+  </style></head><body><div class="g">${items.map(x => `<div class="l">${qrSvg(x.url)}<div class="tx"><b>${esc(x.t)}</b><span>${esc(x.s)}</span><i>PPS · Control de Insumos</i></div></div>`).join('')}</div>
+  <script>setTimeout(()=>print(),400)<\/script></body></html>`);
+  w.document.close();
+}
+
+/* =================== INICIO =================== */
+(function init() {
+  if (LOGO_SRC) { $('#logo').src = LOGO_SRC; $('#logo').style.display = 'block'; $('#gateLogo').src = LOGO_SRC; $('#gateLogo').style.display = 'block' }
+  if (apiOk() && !KEY) showGate();
+  $('#firmaReq').textContent = FIRMA_OBLIGATORIA ? '(obligatoria)' : '(opcional)';
+  $$('#tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+  $$('#admSub button').forEach(b => b.onclick = () => { ASUB = b.dataset.s; renderAdmin() });
+  bindScan('#scanE', 'E'); bindScan('#scanI', 'I');
+  $('#iResp').value = $('#cResp').value = localStorage.getItem('ins_resp') || '';
+  const setTurno = () => $('#eTurno').value = turnoAuto().toUpperCase(); setTurno(); setInterval(setTurno, 60000);
+  // Todo lo que se escribe queda en MAYÚSCULA (excepto escáner, PIN y URL de configuración)
+  document.addEventListener('input', e => {
+    const t = e.target;
+    if (!((t.tagName === 'INPUT' && (t.type === 'text' || t.type === 'search')) || t.tagName === 'TEXTAREA') || 'noup' in t.dataset) return;
+    const v = t.value.toUpperCase(); if (v === t.value) return;
+    const p = t.selectionStart; t.value = v; try { t.setSelectionRange(p, p) } catch {}
+  }, true);
+  const fixNav = () => $('nav').style.top = $('header').offsetHeight + 'px'; fixNav();
+  window.addEventListener('resize', () => { fixNav(); if (SIG.isEmpty()) SIG.size() });
+  window.addEventListener('online', () => sync()); window.addEventListener('offline', updPill);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) sync() });
+  rebuild();
+  // Link desde QR: ?i=CODIGO (insumo) o ?a=AREA
+  const p = new URLSearchParams(location.search), qi = p.get('i'), qa = p.get('a');
+  const t0 = (qi || qa) ? 'ent' : (localStorage.getItem('ins_tab') || 'ent');
+  showTab(t0);
+  if (qi || qa) {
+    history.replaceState(null, '', location.pathname);
+    const go = () => { if (qa) onScan('E', location.origin + location.pathname + '?a=' + encodeURIComponent(qa)); if (qi) addToCart('E', qi) };
+    if (DB.insumos.length) go(); else refresh().then(go);
+  }
+  sync();
+  setInterval(() => { if (!document.hidden) sync() }, 90000);
+})();
+</script>
+</body>
+</html>
