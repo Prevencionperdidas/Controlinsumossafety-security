@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#0058A3">
+<title>Solicitud de Insumos · People & Culture</title>
+<style>
+:root{--b:#0058A3;--y:#FFDB00;--bg:#eef1f5;--ok:#0a8a4a;--err:#cc0008;--tx:#1b1f24;--mu:#6b7480;--ln:#dde2e8}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:15px}
+header{background:var(--b);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;gap:8px;position:sticky;top:0;z-index:20}
+.hl{display:flex;align-items:center;gap:10px;min-width:0}#logo{height:38px;display:none}
+header h1{font-size:17px;margin:0;line-height:1.1}header small{color:#cfe0f2;font-size:11px}
+.pill{border:0;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:600;background:#fff;color:var(--b);cursor:pointer;white-space:nowrap}
+.pill.pend{background:var(--y);color:#222}.pill.off{background:#ffd6d6;color:var(--err)}
+main{max-width:860px;margin:0 auto;padding:12px}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--b)}
+label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin-bottom:8px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--ln);border-radius:8px;font-size:16px;font-family:inherit;margin-top:3px;background:#fff;color:var(--tx)}
+input:not([data-noup]):not([type=date]):not([type=number]),textarea{text-transform:uppercase}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--b);border-color:transparent}
+input.bad{border-color:var(--err);background:#fff5f5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.btn{border:0;background:var(--b);color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer}
+.btn.y{background:var(--y);color:#111}.btn.ghost{background:#e8eef5;color:var(--b)}.btn.sm{padding:7px 11px;font-size:13px}
+.btn.big{width:100%;padding:16px;font-size:17px;background:var(--y);color:#111;margin-bottom:12px}
+.muted{color:var(--mu);font-size:13px}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.cat{position:relative;border:2px solid var(--ln);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;user-select:none}
+.cat:active{transform:scale(.97)}.cat.sel{border-color:var(--y)}
+.im{aspect-ratio:4/3;background:#eef3f9;display:flex;align-items:center;justify-content:center;font-size:42px;overflow:hidden}
+.im img{width:100%;height:100%;object-fit:cover}
+.cl{padding:7px 9px}.cl b{display:block;font-size:13px;line-height:1.2}
+.cb{position:absolute;top:6px;right:6px;background:var(--y);color:#111;font-weight:800;font-size:13px;min-width:26px;height:26px;border-radius:13px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.line{display:grid;grid-template-columns:1fr 130px 90px 36px;gap:8px;align-items:end;padding:8px 0;border-bottom:1px solid var(--ln)}
+.line b{font-size:14px;align-self:center}.line label{margin:0}
+@media(max-width:520px){.line{grid-template-columns:1fr 1fr 36px}.line b{grid-column:1/-1}}
+.x{border:0;background:none;color:var(--err);font-size:20px;cursor:pointer;padding:8px 4px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:12px}#modal.on{display:flex}
+.mbox{background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:90vh;overflow:auto;padding:16px}.mbox h3{margin:0 0 10px;color:var(--b)}
+.bd{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.b-PENDIENTE{background:#fff1c2;color:#8a5d00}.b-ENTREGADA{background:#d9f2e3;color:var(--ok)}.b-RECHAZADA{background:#f8d0d0;color:var(--err)}
+.sol{border:1px solid var(--ln);border-radius:10px;padding:10px;margin-top:8px;font-size:14px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#222;color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;z-index:60;display:none;max-width:90vw;text-align:center}
+#toast.ok{background:var(--ok)}#toast.err{background:var(--err)}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl"><img id="logo" alt="PPS"><div><h1>Solicitud de Insumos</h1><small>People &amp; Culture → Prevención de Pérdidas y Seguridad</small></div></div>
+  <button id="pill" class="pill" onclick="manualSync()">…</button>
+</header>
+<main>
+  <div class="card">
+    <h2>1 · Quién solicita</h2>
+    <div class="grid2">
+      <label>Nombre de quien solicita *<input id="sNom" autocomplete="name"></label>
+      <label>Correo (te avisamos cuando se entregue)<input id="sMail" type="email" data-noup autocomplete="email" placeholder="nombre@ikea.com"></label>
+    </div>
+  </div>
+  <div class="card">
+    <h2>2 · Colaborador nuevo</h2>
+    <div class="grid2">
+      <label>Nombre completo *<input id="cNom" autocomplete="off"></label>
+      <label>RUT *<input id="cRut" autocomplete="off" placeholder="12.345.678-9" oninput="rutInput(this)"></label>
+      <label>Cargo<input id="cCargo" autocomplete="off"></label>
+      <label>Área *<select id="cArea"></select></label>
+      <label>Fecha de ingreso *<input id="cIng" type="date"></label>
+    </div>
+  </div>
+  <div class="card">
+    <h2>3 · ¿Qué necesita? <span class="muted">(toca la foto)</span></h2>
+    <div id="cats" class="cats"></div>
+    <div id="lines" style="margin-top:10px"></div>
+    <label style="margin-top:10px">Observación<textarea id="sObs" rows="2" placeholder="OPCIONAL"></textarea></label>
+  </div>
+  <button class="btn big" onclick="enviar()">📨 Enviar solicitud a PPS</button>
+  <div class="card">
+    <h2>Consultar estado de una solicitud</h2>
+    <div style="display:flex;gap:8px"><input id="qSol" placeholder="N° DE SOLICITUD O RUT" style="margin:0"><button class="btn" onclick="consultar()">Buscar</button></div>
+    <div id="qRes"></div>
+  </div>
+</main>
+<div id="modal"><div class="mbox" id="mBody"></div></div>
+<div id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+/* =================== CONFIGURACIÓN (misma URL que index.html) =================== */
+const API_DEFAULT = (window.PPS_CONFIG && PPS_CONFIG.API) || 'PEGA_AQUI_LA_URL_DE_APPS_SCRIPT';
+const LOGO_SRC = (window.PPS_CONFIG && PPS_CONFIG.LOGO) || '';
+
+let API = (/^https:\/\/script\.google\.com\//.test(API_DEFAULT) ? API_DEFAULT : '') || localStorage.getItem('ins_api') || API_DEFAULT;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, '0');
+const up = s => String(s ?? '').trim().toUpperCase();
+const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n };
+const fdmy = s => { s = String(s || ''); return s.length >= 10 ? `${s.slice(8,10)}-${s.slice(5,7)}-${s.slice(0,4)}` : s };
+function toast(m, c = '') { const t = $('#toast'); t.textContent = m; t.className = c; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 3200) }
+const apiOk = () => /^https:\/\/script\.google\.com\//.test(API);
+function jsonp(params, timeout = 25000) {
+  return new Promise((res, rej) => {
+    const cb = 'cb_' + uid(), s = document.createElement('script');
+    const t = setTimeout(() => { done(); rej(new Error('timeout')) }, timeout);
+    function done() { clearTimeout(t); delete window[cb]; s.remove() }
+    window[cb] = d => { done(); res(d) }; s.onerror = () => { done(); rej(new Error('red')) };
+    s.src = API + '?' + new URLSearchParams({ ...params, callback: cb, _: Date.now() }); document.body.appendChild(s);
+  });
+}
+
+/* ---------- RUT chileno ---------- */
+function cleanRut(r) { return up(r).replace(/[^0-9K]/g, '') }
+function fmtRut(r) { r = cleanRut(r); if (r.length < 2) return r; return r.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + r.slice(-1) }
+function rutValido(r) { r = cleanRut(r); if (r.length < 8) return false; const b = r.slice(0, -1), d = r.slice(-1); let s = 0, m = 2; for (let i = b.length - 1; i >= 0; i--) { s += +b[i] * m; m = m === 7 ? 2 : m + 1 } const v = 11 - (s % 11); return d === (v === 11 ? '0' : v === 10 ? 'K' : String(v)) }
+function rutInput(el) { el.classList.toggle('bad', cleanRut(el.value).length >= 8 && !rutValido(el.value)) }
+
+/* ---------- catálogo ---------- */
+let CAT = load('sol_cat', { cats: [], areas: [] }), FOTOS = load('ins_fotos', { ver: '', map: {} });
+let LINES = load('sol_lines', []), QUEUE = load('sol_queue', []), NETERR = false, SYNCING = false, LASTERR = '';
+const fotoOf = (t, c) => FOTOS.map[t + '|' + up(c)] || '';
+const EMO = [[/calzad|zapat|bota/i, '🥾'], [/casco/i, '⛑️'], [/guante/i, '🧤'], [/lente|gafa|antiparra/i, '🥽'], [/chaleco|geólog|reflect/i, '🦺'], [/oído|auditiv|tapón/i, '🎧'], [/cortante|cuchill|cutter/i, '🔪'], [/mascar|respir/i, '😷'], [/ropa|polera|pantal|chaqueta|parka/i, '👕']];
+const emoji = s => (EMO.find(([r]) => r.test(s || '')) || [0, '🧰'])[1];
+const SZ = ['XXS','XS','S','M','L','XL','XXL','XXXL'];
+function szSort(a, b) { const k = t => { const i = SZ.indexOf(up(t)); if (i >= 0) return [0, i]; const n = parseFloat(t); return isNaN(n) ? [2, t] : [1, n] }; const x = k(a), y = k(b); return x[0] - y[0] || (x[1] < y[1] ? -1 : x[1] > y[1] ? 1 : 0) }
+async function refresh() {
+  if (!apiOk()) return updPill();
+  try {
+    const r = await jsonp({ action: 'catalogoSol' });
+    if (!r.ok) throw new Error('srv:' + (r.error || ''));
+    if (!Array.isArray(r.cats)) throw new Error('version');
+    CAT = { cats: r.cats, areas: r.areas || [] }; save('sol_cat', CAT); NETERR = false; LASTERR = '';
+    if (String(r.fotosVer) !== String(FOTOS.ver)) {
+      const f = await jsonp({ action: 'fotos' }, 60000);
+      if (f.ok) { const map = {}; (f.fotos || []).forEach(x => { if (x.Foto) map[x.Tipo + '|' + up(x.Clave)] = x.Foto }); FOTOS = { ver: String(f.ver), map }; save('ins_fotos', FOTOS) }
+    }
+  } catch (e) { NETERR = true; LASTERR = String(e && e.message || e) }
+  render(); updPill();
+}
+function catFoto(c) { return fotoOf('CAT', c.Categoria) || '' }
+function render() {
+  const sel = $('#cArea'), v = sel.value;
+  sel.innerHTML = '<option value="">— Selecciona —</option>' + CAT.areas.slice().sort().map(a => `<option>${esc(a)}</option>`).join(''); sel.value = v;
+  $('#cats').innerHTML = CAT.cats.length ? CAT.cats.slice().sort((a, b) => a.Categoria.localeCompare(b.Categoria, 'es')).map(c => {
+    const n = LINES.filter(l => l.Categoria === c.Categoria).reduce((a, l) => a + num(l.Cantidad), 0), f = catFoto(c);
+    return `<div class="cat ${n ? 'sel' : ''}" onclick="addLine('${esc(c.Categoria)}')"><div class="im">${f ? `<img src="${f}">` : emoji(c.Categoria)}</div><div class="cl"><b>${esc(c.Categoria)}</b></div>${n ? `<span class="cb">${n}</span>` : ''}</div>`;
+  }).join('') : `<p class="muted">${apiOk() ? 'Cargando…' : 'Página sin configurar.'}</p>`;
+  $('#lines').innerHTML = LINES.map((l, i) => {
+    const c = CAT.cats.find(x => x.Categoria === l.Categoria) || { Tallas: [], Modelos: [] };
+    const opts = c.Tallas.length ? c.Tallas.slice().sort(szSort) : (c.Modelos.length > 1 ? c.Modelos : []);
+    return `<div class="line"><b>${esc(l.Categoria)}</b>
+      ${opts.length ? `<label>${c.Tallas.length ? 'Talla' : 'Modelo'} *<select onchange="LINES[${i}].Talla=this.value;saveL()"><option value="">—</option>${opts.map(t => `<option ${t === l.Talla ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>` : '<span></span>'}
+      <label>Cantidad<input type="number" min="1" inputmode="numeric" value="${l.Cantidad}" onchange="LINES[${i}].Cantidad=Math.max(1,num(this.value));saveL();render()"></label>
+      <button class="x" onclick="LINES.splice(${i},1);saveL();render()">✕</button></div>`;
+  }).join('') || '<p class="muted">Toca la foto de lo que necesita el colaborador.</p>';
+}
+function saveL() { save('sol_lines', LINES) }
+function addLine(cat) { LINES.push({ Categoria: cat, Talla: '', Cantidad: 1 }); saveL(); render(); setTimeout(() => $('#lines').lastElementChild?.querySelector('select')?.focus(), 30) }
+
+/* ---------- envío (con cola offline) ---------- */
+async function sync() {
+  if (SYNCING || !apiOk() || !QUEUE.length) return updPill();
+  SYNCING = true; updPill();
+  try {
+    for (const op of QUEUE) { if (op.sent && Date.now() - op.sent < 20000) continue; await fetch(API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(op) }); op.sent = Date.now(); save('sol_queue', QUEUE) }
+    const r = await jsonp({ action: 'confirm', ids: QUEUE.map(o => o.opId).join(',') });
+    if (r.ok) { QUEUE = QUEUE.filter(o => !r.ids.includes(o.opId)); save('sol_queue', QUEUE) }
+    NETERR = false;
+  } catch (e) { NETERR = true; LASTERR = LASTERR || (e && e.message === 'timeout' ? 'timeout' : 'red') }
+  SYNCING = false; updPill();
+}
+function diag() {
+  const why = {
+    version: '<b>El servidor responde, pero tiene el código ANTERIOR.</b> En el Apps Script pega el Code.gs nuevo, ejecuta <b>setup()</b> y luego Implementar → Gestionar implementaciones → lápiz → <b>Nueva versión</b>.',
+    timeout: '<b>Google respondió, pero no con los datos.</b> Casi siempre es la página de inicio de sesión o "No tienes permiso": el navegador no tiene sesión con una cuenta <b>@ikea.cl</b>, o la implementación no está en "Cualquier usuario de IKEA".',
+    red: '<b>No se pudo llegar a script.google.com.</b> La red bloquea Google Apps Script o la URL está mal copiada en solicitud.html.'
+  }[LASTERR] || ('<b>Error del servidor:</b> ' + esc(LASTERR.replace('srv:', '')));
+  $('#mBody').innerHTML = `<h3>Diagnóstico de conexión</h3><p style="font-size:14px">${why}</p>
+    <p class="muted" style="word-break:break-all">URL configurada:<br>${esc(API)}</p>
+    <p style="font-size:14px">Toca <b>Abrir prueba</b>: debe aparecer un texto que empieza con <code>{"ok":true,"cats":[</code>. Si dice <code>{"ok":true,"app":"Control de Insumos PPS"}</code> el servidor está desactualizado.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="${esc(API)}?action=catalogoSol" target="_blank" style="text-decoration:none">Abrir prueba ↗</a>
+    <button class="btn y" onclick="$('#modal').classList.remove('on');refresh().then(sync)">Reintentar</button><button class="btn ghost" onclick="$('#modal').classList.remove('on')">Cerrar</button></div>`;
+  $('#modal').classList.add('on');
+}
+function manualSync() { if (NETERR && apiOk()) return diag(); QUEUE.forEach(o => o.sent = 0); sync().then(() => toast(QUEUE.length ? `Quedan ${QUEUE.length} solicitudes por enviar` : 'Todo enviado ✔', QUEUE.length ? '' : 'ok')); refresh() }
+function updPill() {
+  const p = $('#pill'), n = QUEUE.length;
+  if (!apiOk()) { p.className = 'pill off'; p.textContent = '⚙ Sin configurar'; return }
+  if (SYNCING) { p.className = 'pill pend'; p.textContent = '⟳ Enviando…'; return }
+  if (!navigator.onLine || NETERR) { p.className = 'pill off'; p.textContent = LASTERR === 'version' ? '⚠ Servidor desactualizado · tocar' : `⚠ Sin conexión${n ? ' · ' + n + ' por enviar' : ''} · tocar`; return }
+  if (n) { p.className = 'pill pend'; p.textContent = `⏳ ${n} por enviar`; return }
+  p.className = 'pill'; p.textContent = '✔ Conectado';
+}
+function enviar() {
+  const d = { Solicitante: up($('#sNom').value), CorreoSolicitante: $('#sMail').value.trim().toLowerCase(), Colaborador: up($('#cNom').value), RUT: fmtRut($('#cRut').value), Cargo: up($('#cCargo').value), Area: $('#cArea').value, FechaIngreso: $('#cIng').value, Observacion: up($('#sObs').value) };
+  if (!d.Solicitante) return toast('Indica quién solicita', 'err');
+  if (!d.Colaborador) return toast('Indica el nombre del colaborador', 'err');
+  if (!rutValido(d.RUT)) return toast('RUT inválido (revisa el dígito verificador)', 'err');
+  if (!d.Area) return toast('Selecciona el área', 'err');
+  if (!d.FechaIngreso) return toast('Indica la fecha de ingreso', 'err');
+  if (!LINES.length) return toast('Agrega al menos un insumo', 'err');
+  for (const l of LINES) { const c = CAT.cats.find(x => x.Categoria === l.Categoria); if (c && (c.Tallas.length || c.Modelos.length > 1) && !l.Talla) return toast(`Falta elegir talla/modelo de ${l.Categoria}`, 'err') }
+  const now = new Date();
+  d.ID = `S-${String(now.getFullYear()).slice(2)}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+  d.ts = now.getTime(); d.items = LINES.map(l => ({ Categoria: l.Categoria, Talla: l.Talla, Cantidad: num(l.Cantidad) }));
+  QUEUE.push({ opId: uid(), action: 'solicitud', data: d }); save('sol_queue', QUEUE);
+  localStorage.setItem('sol_nom', d.Solicitante); localStorage.setItem('sol_mail', d.CorreoSolicitante);
+  LINES = []; saveL(); ['#cNom', '#cRut', '#cCargo', '#cIng', '#sObs'].forEach(s => $(s).value = ''); $('#cRut').classList.remove('bad'); render();
+  $('#mBody').innerHTML = `<h3>📨 Solicitud enviada</h3><p><b>N° ${esc(d.ID)}</b><br>${esc(d.Colaborador)} · ${esc(d.RUT)}<br>${d.items.map(x => `${x.Cantidad} × ${esc(x.Categoria)}${x.Talla ? ' T' + esc(x.Talla) : ''}`).join('<br>')}</p>
+    <p class="muted">Queda <b>pendiente</b> hasta que Prevención de Pérdidas registre la entrega.${d.CorreoSolicitante ? ' Te avisaremos a ' + esc(d.CorreoSolicitante) + '.' : ''} Puedes consultar el estado con el N° o el RUT.</p>
+    <button class="btn y" style="width:100%" onclick="$('#modal').classList.remove('on');window.scrollTo({top:0,behavior:'smooth'})">Nueva solicitud</button>`;
+  $('#modal').classList.add('on'); sync();
+}
+async function consultar() {
+  const q = $('#qSol').value.trim(); if (!q) return;
+  const key = /^S-/i.test(q) ? up(q) : cleanRut(q).length >= 7 ? fmtRut(q).replace(/\./g, '') : up(q);
+  const local = QUEUE.filter(o => o.data.ID === up(q) || cleanRut(o.data.RUT) === cleanRut(q)).map(o => ({ ...o.data, Estado: 'POR ENVIAR', Detalle: o.data.items.map(x => x.Cantidad + ' × ' + x.Categoria + (x.Talla ? ' T' + x.Talla : '')).join(' · ') }));
+  $('#qRes').innerHTML = '<p class="muted">Buscando…</p>';
+  try { const r = await jsonp({ action: 'estadoSol', q: key }); show([...local, ...(r.sols || [])]) } catch { show(local, true) }
+  function show(l, off) { $('#qRes').innerHTML = l.map(s => `<div class="sol"><b>${esc(s.ID)}</b> <span class="bd b-${esc(s.Estado)}">${esc(s.Estado)}</span><br>${esc(s.Colaborador)} · ${fdmy(s.Fecha)}<br><span class="muted">${esc(s.Detalle)}</span>${s.FechaEntrega ? `<br>${s.Estado === 'ENTREGADA' ? 'Entregada' : 'Cerrada'} el ${fdmy(s.FechaEntrega)}` : ''}${s.Motivo ? `<br><i>${esc(s.Motivo)}</i>` : ''}</div>`).join('') || `<p class="muted">${off ? 'Sin conexión.' : 'No se encontraron solicitudes.'}</p>` }
+}
+
+(function init() {
+  if (LOGO_SRC) { $('#logo').src = LOGO_SRC; $('#logo').style.display = 'block' }
+  $('#sNom').value = localStorage.getItem('sol_nom') || ''; $('#sMail').value = localStorage.getItem('sol_mail') || '';
+  document.addEventListener('input', e => { const t = e.target; if (!((t.tagName === 'INPUT' && t.type === 'text') || t.tagName === 'TEXTAREA') || 'noup' in t.dataset) return; const v = t.value.toUpperCase(); if (v === t.value) return; const p = t.selectionStart; t.value = v; try { t.setSelectionRange(p, p) } catch {} }, true);
+  $('#cRut').addEventListener('blur', e => { if (cleanRut(e.target.value).length >= 2) e.target.value = fmtRut(e.target.value) });
+  window.addEventListener('online', () => { sync(); refresh() });
+  render(); refresh(); sync(); setInterval(() => { if (!document.hidden) sync() }, 60000);
+})();
+</script>
+</body>
+</html>
